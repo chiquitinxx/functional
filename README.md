@@ -3,6 +3,7 @@
 Library with classes to improve your functional style programming experience.
 
 Pair<L,R> -> a class containing a pair of values
+
 Result<T> -> contains the result or the failures. A mix between "Optional" and "Either".
 
 ## Dependencies
