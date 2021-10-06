@@ -9,14 +9,4 @@ public interface Failure {
     default String getCode() {
         return this.getClass().getName();
     }
-
-    default String asString() {
-        if (this instanceof ThrowableFailure throwableError) {
-            Throwable throwable = throwableError.getThrowable();
-            return this.getCode() + ":" + throwable.getClass().getCanonicalName() + ":" +
-                    throwable.getMessage();
-        } else {
-            return this.toString();
-        }
-    }
 }

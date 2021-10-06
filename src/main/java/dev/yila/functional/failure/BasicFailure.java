@@ -16,7 +16,7 @@ public class BasicFailure implements Failure {
     }
 
     @Override
-    public String asString() {
+    public String toString() {
         return this.code + ": " + this.description;
     }
 }

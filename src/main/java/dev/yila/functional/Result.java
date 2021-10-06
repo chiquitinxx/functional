@@ -6,6 +6,7 @@ import dev.yila.functional.failure.ThrowableFailure;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -81,7 +82,7 @@ public class Result<T> {
     private final T value;
     private final List<Failure> failures;
 
-    public static Result<List> checkAll(Result... results) {
+    public static Result<List> join(Result... results) {
         List okResults = Arrays.stream(results)
                 .filter(result -> !result.hasFailures())
                 .map(Result::get)
@@ -107,7 +108,7 @@ public class Result<T> {
      */
     public T get() {
         if (hasFailures()) {
-            throw new NullPointerException("Value not present");
+            throw new NoSuchElementException("Value not present");
         }
         return value;
     }
@@ -125,7 +126,7 @@ public class Result<T> {
 
     public String getFailuresToString() {
         return "[" + this.failures.stream()
-                .map(Failure::asString)
+                .map(Failure::toString)
                 .collect(Collectors.joining(", ")) +
                 "]";
     }
@@ -149,7 +150,7 @@ public class Result<T> {
      */
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
         if (hasFailures()) {
-            return Result.failures(this.failures);
+            return (Result<R>) this;
         } else {
             return function.apply(this.value);
         }
@@ -157,7 +158,7 @@ public class Result<T> {
 
     public <R> Result<R> map(Function<T, R> function) {
         if (hasFailures()) {
-            return Result.failures(this.failures);
+            return (Result<R>) this;
         } else {
             return Result.ok(function.apply(this.value));
         }
@@ -187,7 +188,7 @@ public class Result<T> {
 
     @Override
     public String toString() {
-        return "Result(" + (this.hasFailures() ? "FAILURES" : "OK") + ")" +
+        return "Result(" + (this.hasFailures() ? "FAILURES" : "OK") + "):" +
                 (this.hasFailures() ? this.getFailuresToString() : value.toString());
     }
 

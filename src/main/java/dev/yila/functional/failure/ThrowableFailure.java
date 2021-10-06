@@ -14,6 +14,6 @@ public class ThrowableFailure implements Failure {
 
     @Override
     public String toString() {
-        return "ThrowableFail: " + throwable.getClass().getName() + ": " + throwable.getMessage();
+        return "ThrowableFailure: " + throwable.getClass().getName() + ": " + throwable.getMessage();
     }
 }

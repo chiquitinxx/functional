@@ -67,9 +67,9 @@
         <groupId>org.pitest</groupId>
         <artifactId>pitest-maven</artifactId>
         <version>${pitest.version}</version>
-        <!--configuration>
+        <configuration>
           <coverageThreshold>100</coverageThreshold>
-        </configuration-->
+        </configuration>
         <dependencies>
           <dependency>
             <groupId>org.pitest</groupId>
