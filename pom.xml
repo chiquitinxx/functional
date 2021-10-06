@@ -4,7 +4,7 @@
 
   <groupId>dev.yila</groupId>
   <artifactId>functional</artifactId>
-  <version>0.4</version>
+  <version>0.5-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>functional</name>
@@ -27,7 +27,7 @@
     <connection>scm:git:git://github.com/chiquitinxx/functional.git</connection>
     <developerConnection>scm:git:git@github.com:chiquitinxx/functional.git</developerConnection>
     <url>http://github.com/chiquitinxx/functional/tree/main</url>
-    <tag>functional-0.4</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
