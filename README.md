@@ -13,3 +13,9 @@ Java 17, no more dependencies.
 ## Run pitest coverage
 
 mvn clean verify org.pitest:pitest-maven:mutationCoverage
+
+## Release information
+
+https://central.sonatype.org/publish/publish-maven/
+
+To deploy snapshot: mvn clean deploy -P release
