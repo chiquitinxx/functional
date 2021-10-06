@@ -1,5 +1,14 @@
 # functional
 
+Library with classes to improve your functional style programming experience.
+
+Pair<L,R> -> a class containing a pair of values
+Result<T> -> contains the result or the failures. A mix between "Optional" and "Either".
+
+## Dependencies
+
+Java 17, no more dependencies.
+
 ## Run pitest coverage
 
-mvn org.pitest:pitest-maven:mutationCoverage
+mvn clean verify org.pitest:pitest-maven:mutationCoverage
