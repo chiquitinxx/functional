@@ -5,9 +5,10 @@ import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,6 +42,13 @@ public class FutureResultTest {
         FutureResult<String> result = FutureResult.create(future);
         assertTrue(result.hasFailures());
         assertEquals(throwable, ((ThrowableFailure) result.getFailures().get(0)).getThrowable());
+    }
+
+    @Test
+    void multipleFailures() {
+        List<Failure> failures = Collections.singletonList(Failure.create("code", "description"));
+        FutureResult result = FutureResult.failures(failures);
+        assertTrue(result.map((input) -> false).hasFailures());
     }
 
     @Test
