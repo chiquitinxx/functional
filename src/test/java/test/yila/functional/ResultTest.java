@@ -7,6 +7,7 @@ import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -42,7 +43,10 @@ public class ResultTest {
 
     @Test
     void resultWithMultipleErrors() {
-        Result result = Result.failures(List.of(new SomeFailure(), Failure.create(CODE, DESCRIPTION)));
+        List<Failure> failures = new ArrayList();
+        failures.add(new SomeFailure());
+        failures.add(Failure.create(CODE, DESCRIPTION));
+        Result result = Result.failures(failures);
         assertTrue(result.hasFailure(SomeFailure.class));
         assertEquals(2, result.getFailures().size());
         assertTrue(result.getFailures().get(0) instanceof SomeFailure);

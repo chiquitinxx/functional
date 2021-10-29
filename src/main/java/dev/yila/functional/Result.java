@@ -86,7 +86,7 @@ public class Result<T> {
         List okResults = Arrays.stream(results)
                 .filter(result -> !result.hasFailures())
                 .map(Result::get)
-                .toList();
+                .collect(Collectors.toList());
         if (okResults.size() == results.length) {
             return Result.ok(okResults);
         } else {
@@ -201,6 +201,6 @@ public class Result<T> {
         return results.stream()
                 .filter(Result::hasFailures)
                 .flatMap(result -> result.getFailures().stream())
-                .toList();
+                .collect(Collectors.toList());
     }
 }
