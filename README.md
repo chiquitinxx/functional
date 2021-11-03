@@ -8,7 +8,7 @@ Result<T> -> contains the result or the failures. A mix between "Optional" and "
 
 ## Dependencies
 
-Java 17, no more dependencies.
+Java 8, no more dependencies.
 
 ## Run pitest coverage
 
