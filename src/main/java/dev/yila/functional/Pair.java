@@ -1,5 +1,10 @@
 package dev.yila.functional;
 
+/**
+ * Class to store 2 values
+ * @param <L>
+ * @param <R>
+ */
 public class Pair<L, R> {
 
     private final L left;

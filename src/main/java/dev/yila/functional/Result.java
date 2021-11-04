@@ -12,6 +12,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * Class to store the result or the failures
+ * @param <T>
+ */
 public class Result<T> {
 
     /**
@@ -63,6 +67,14 @@ public class Result<T> {
         return Result.ok(supplier.get());
     }
 
+    /**
+     * Create a Result from a supplier with a checked exception
+     * @param throwingSupplier
+     * @param throwableClass
+     * @param <T>
+     * @param <K>
+     * @return
+     */
     public static <T, K extends Throwable> Result<T> createChecked(ThrowingSupplierException<T, K> throwingSupplier, Class<K> throwableClass) {
         try {
             return Result.ok(throwingSupplier.get());
@@ -75,6 +87,12 @@ public class Result<T> {
         }
     }
 
+    /**
+     * Create a Result from a Supplier that return a Result
+     * @param supplier
+     * @param <T>
+     * @return
+     */
     public static <T> Result<T> flatCreate(Supplier<Result<T>> supplier) {
         return supplier.get();
     }
@@ -82,6 +100,11 @@ public class Result<T> {
     private final T value;
     private final List<Failure> failures;
 
+    /**
+     * Join multiple Results in one Result
+     * @param results
+     * @return
+     */
     public static Result<List> join(Result... results) {
         List okResults = Arrays.stream(results)
                 .filter(result -> !result.hasFailures())
@@ -113,6 +136,11 @@ public class Result<T> {
         return value;
     }
 
+    /**
+     * Return the success result or the execution of the function if it has failures
+     * @param function
+     * @return
+     */
     public T orElse(Function<Result<T>, T> function) {
         if (this.hasFailures()) {
             return function.apply(this);
@@ -120,10 +148,18 @@ public class Result<T> {
         return value;
     }
 
+    /**
+     * Get failures or null if is success
+     * @return
+     */
     public List<Failure> getFailures() {
         return this.failures;
     }
 
+    /**
+     * Get failures as String
+     * @return
+     */
     public String getFailuresToString() {
         return "[" + this.failures.stream()
                 .map(Failure::toString)
@@ -156,6 +192,12 @@ public class Result<T> {
         }
     }
 
+    /**
+     * New result with the execution of the function if is success
+     * @param function
+     * @param <R>
+     * @return
+     */
     public <R> Result<R> map(Function<T, R> function) {
         if (hasFailures()) {
             return (Result<R>) this;
@@ -164,6 +206,11 @@ public class Result<T> {
         }
     }
 
+    /**
+     * Execute the consumer if the result is success
+     * @param consumer
+     * @return
+     */
     public Result<T> onSuccess(Consumer<T> consumer) {
         if (!hasFailures()) {
             consumer.accept(this.value);
@@ -171,6 +218,11 @@ public class Result<T> {
         return this;
     }
 
+    /**
+     * Execute the consumer if the result has failures
+     * @param consumer
+     * @return
+     */
     public Result<T> onFailures(Consumer<Result<T>> consumer) {
         if (hasFailures()) {
             consumer.accept(this);
@@ -178,10 +230,20 @@ public class Result<T> {
         return this;
     }
 
+    /**
+     * Check if the result not has a failure of the provided class
+     * @param failureClass
+     * @return
+     */
     public boolean notHasFailure(Class<? extends Failure> failureClass) {
         return !hasFailures() || failures.stream().noneMatch(failureClass::isInstance);
     }
 
+    /**
+     * Check if the result has a failure of the provided class
+     * @param failureClass
+     * @return
+     */
     public boolean hasFailure(Class<? extends Failure> failureClass) {
         return hasFailures() && failures.stream().anyMatch(failureClass::isInstance);
     }

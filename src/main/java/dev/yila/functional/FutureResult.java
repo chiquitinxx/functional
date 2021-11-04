@@ -10,6 +10,10 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * Experimental FutureResult
+ * @param <T>
+ */
 public class FutureResult<T> {
 
     public static <V> FutureResult<V> create(CompletableFuture<V> future) {
