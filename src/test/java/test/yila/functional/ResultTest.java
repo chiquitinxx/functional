@@ -42,7 +42,7 @@ public class ResultTest {
     }
 
     @Test
-    void resultWithMultipleErrors() {
+    void resultWithMultipleFailures() {
         List<Failure> failures = new ArrayList();
         failures.add(new SomeFailure());
         failures.add(Failure.create(CODE, DESCRIPTION));
