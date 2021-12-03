@@ -8,64 +8,124 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class FutureResultTest {
 
-    @Test
-    void createFutureResultFromCompletableFuture() {
-        FutureResult<String> result = FutureResult.create(CompletableFuture.completedFuture("hello"));
-        assertEquals("hello", result.get());
-    }
+    private final RuntimeException runtimeException = new RuntimeException("exception");
+    private final Failure failure = Failure.create("code", "description");
 
     @Test
     void createFutureResultFromSupplier() {
         FutureResult<String> result = FutureResult.create(() -> "again");
-        assertEquals("again", result.get());
+        assertEquals("again", result.result().get());
     }
 
     @Test
-    void createAFailResult() {
-        FutureResult result = FutureResult.failure(Failure.create("code", "description"));
-        assertTrue(result.hasFailures());
-        assertEquals(1, result.getFailures().size());
-        assertThrows(NoSuchElementException.class, result::get);
+    void createAFailFutureResult() {
+        FutureResult result = FutureResult.failure(failure);
+        assertTrue(result.result().hasFailures());
+        assertEquals(1, result.result().getFailures().size());
+        assertThrows(NoSuchElementException.class, result.result()::get);
     }
 
     @Test
-    void futureFailed() {
-        Throwable throwable = new Exception("exception");
-        CompletableFuture future = new CompletableFuture();
-        future.completeExceptionally(throwable);
-        FutureResult<String> result = FutureResult.create(future);
-        assertTrue(result.hasFailures());
-        assertEquals(throwable, ((ThrowableFailure) result.getFailures().get(0)).getThrowable());
+    void futureFailedWithRuntimeException() {
+        FutureResult<String> result = FutureResult.create(() -> {
+            throw runtimeException;
+        });
+        assertTrue(result.result().hasFailures());
+        List<Failure> failures = result.result().getFailures();
+        assertEquals(runtimeException, ((ThrowableFailure) failures.get(0)).getThrowable());
     }
 
     @Test
     void multipleFailures() {
-        List<Failure> failures = Collections.singletonList(Failure.create("code", "description"));
+        List<Failure> failures = Collections.singletonList(failure);
         FutureResult result = FutureResult.failures(failures);
-        assertTrue(result.map((input) -> false).hasFailures());
+        assertTrue(result.map((input) -> false).result().hasFailures());
     }
 
     @Test
-    void exceptionExecutingTheFuture() {
-        RuntimeException runtimeException = new RuntimeException("exception");
-        FutureResult<String> result = FutureResult.create(CompletableFuture.supplyAsync(() -> {
-            throw runtimeException;
-        }));
-        assertTrue(result.hasFailures());
-        assertEquals(runtimeException, ((ThrowableFailure) result.getFailures().get(0)).getThrowable());
-    }
-
-    @Test
-    void mapFunctionInFutureResult() {
-        FutureResult<String> hello = FutureResult.create(CompletableFuture.completedFuture("hello"));
+    void mapFunction() {
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
         FutureResult<String> upperHello = hello.map(String::toUpperCase);
         assertNotSame(hello, upperHello);
-        assertEquals("HELLO", upperHello.get());
+        assertEquals("HELLO", upperHello.result().get());
+    }
+
+    @Test
+    void exceptionInMapFunction() {
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        FutureResult<String> failureFuture = hello.map(input -> {
+            throw runtimeException;
+        });
+        assertNotSame(hello, failureFuture);
+        assertTrue(failureFuture.result().hasFailures());
+        assertSame(runtimeException, ((ThrowableFailure) failureFuture.result().getFailures().get(0)).getThrowable());
+    }
+
+    @Test
+    void multipleMapFunctions() {
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        FutureResult<Integer> stringLength = hello
+                .map(String::toUpperCase)
+                .map(String::toLowerCase)
+                .map(String::length);
+        assertEquals(5, stringLength.result().get());
+    }
+
+    @Test
+    void flatMapFunction() {
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        FutureResult<String> doubleHello = hello.flatMap(s -> FutureResult.create(() -> s + s));
+        assertNotSame(hello, doubleHello);
+        assertEquals("hellohello", doubleHello.result().get());
+    }
+
+    @Test
+    void flatMapAfterFailureNotExecuted() {
+        FutureResult<String> fail = FutureResult.failure(failure);
+        FutureResult<String> afterFail = fail.flatMap(s -> FutureResult.create(() -> s + s));
+        assertNotSame(fail, afterFail);
+        assertSame(failure, afterFail.result().getFailures().get(0));
+    }
+
+    @Test
+    void failureInFlatMapFunction() {
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        FutureResult<String> failureHello = hello.flatMap(s -> FutureResult.failure(failure));
+        assertNotSame(hello, failureHello);
+        assertSame(failure, failureHello.result().getFailures().get(0));
+    }
+
+    @Test
+    void exceptionInFlatMapFunction() {
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        FutureResult<String> exceptionHello = hello.flatMap(s -> FutureResult.create(() -> {
+            throw runtimeException;
+        }));
+        assertNotSame(hello, exceptionHello);
+        assertSame(runtimeException, ((ThrowableFailure) exceptionHello.result().getFailures().get(0)).getThrowable());
+    }
+
+    @Test
+    void multipleMapAndFlatFunctions() {
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        FutureResult<Integer> stringLength = hello
+                .flatMap(s -> FutureResult.create(s::toUpperCase))
+                .map(String::toLowerCase)
+                .flatMap(s -> FutureResult.create(s::length))
+                .map(size -> size * size);
+        assertEquals(25, stringLength.result().get());
+    }
+
+    @Test
+    void canNotUseNullAsSupplierOfFunctions() {
+        assertThrows(IllegalArgumentException.class, () -> FutureResult.create(null));
+        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        assertThrows(IllegalArgumentException.class, () -> hello.map(null));
+        assertThrows(IllegalArgumentException.class, () -> hello.flatMap(null));
     }
 }
