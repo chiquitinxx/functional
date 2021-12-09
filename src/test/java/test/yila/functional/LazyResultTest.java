@@ -1,6 +1,6 @@
 package test.yila.functional;
 
-import dev.yila.functional.FutureResult;
+import dev.yila.functional.LazyResult;
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
@@ -11,28 +11,28 @@ import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FutureResultTest {
+public class LazyResultTest {
 
     private final RuntimeException runtimeException = new RuntimeException("exception");
     private final Failure failure = Failure.create("code", "description");
 
     @Test
-    void createFutureResultFromSupplier() {
-        FutureResult<String> result = FutureResult.create(() -> "again");
+    void createLazyResultFromSupplier() {
+        LazyResult<String> result = LazyResult.create(() -> "again");
         assertEquals("again", result.result().get());
     }
 
     @Test
-    void createAFailFutureResult() {
-        FutureResult result = FutureResult.failure(failure);
+    void createAFailLazyResult() {
+        LazyResult result = LazyResult.failure(failure);
         assertTrue(result.result().hasFailures());
         assertEquals(1, result.result().getFailures().size());
         assertThrows(NoSuchElementException.class, result.result()::get);
     }
 
     @Test
-    void futureFailedWithRuntimeException() {
-        FutureResult<String> result = FutureResult.create(() -> {
+    void lazyFailedWithRuntimeException() {
+        LazyResult<String> result = LazyResult.create(() -> {
             throw runtimeException;
         });
         assertTrue(result.result().hasFailures());
@@ -43,33 +43,33 @@ public class FutureResultTest {
     @Test
     void multipleFailures() {
         List<Failure> failures = Collections.singletonList(failure);
-        FutureResult result = FutureResult.failures(failures);
+        LazyResult result = LazyResult.failures(failures);
         assertTrue(result.map((input) -> false).result().hasFailures());
     }
 
     @Test
     void mapFunction() {
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
-        FutureResult<String> upperHello = hello.map(String::toUpperCase);
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
+        LazyResult<String> upperHello = hello.map(String::toUpperCase);
         assertNotSame(hello, upperHello);
         assertEquals("HELLO", upperHello.result().get());
     }
 
     @Test
     void exceptionInMapFunction() {
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
-        FutureResult<String> failureFuture = hello.map(input -> {
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
+        LazyResult<String> failureLazy = hello.map(input -> {
             throw runtimeException;
         });
-        assertNotSame(hello, failureFuture);
-        assertTrue(failureFuture.result().hasFailures());
-        assertSame(runtimeException, ((ThrowableFailure) failureFuture.result().getFailures().get(0)).getThrowable());
+        assertNotSame(hello, failureLazy);
+        assertTrue(failureLazy.result().hasFailures());
+        assertSame(runtimeException, ((ThrowableFailure) failureLazy.result().getFailures().get(0)).getThrowable());
     }
 
     @Test
     void multipleMapFunctions() {
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
-        FutureResult<Integer> stringLength = hello
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
+        LazyResult<Integer> stringLength = hello
                 .map(String::toUpperCase)
                 .map(String::toLowerCase)
                 .map(String::length);
@@ -78,32 +78,32 @@ public class FutureResultTest {
 
     @Test
     void flatMapFunction() {
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
-        FutureResult<String> doubleHello = hello.flatMap(s -> FutureResult.create(() -> s + s));
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
+        LazyResult<String> doubleHello = hello.flatMap(s -> LazyResult.create(() -> s + s));
         assertNotSame(hello, doubleHello);
         assertEquals("hellohello", doubleHello.result().get());
     }
 
     @Test
     void flatMapAfterFailureNotExecuted() {
-        FutureResult<String> fail = FutureResult.failure(failure);
-        FutureResult<String> afterFail = fail.flatMap(s -> FutureResult.create(() -> s + s));
+        LazyResult<String> fail = LazyResult.failure(failure);
+        LazyResult<String> afterFail = fail.flatMap(s -> LazyResult.create(() -> s + s));
         assertNotSame(fail, afterFail);
         assertSame(failure, afterFail.result().getFailures().get(0));
     }
 
     @Test
     void failureInFlatMapFunction() {
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
-        FutureResult<String> failureHello = hello.flatMap(s -> FutureResult.failure(failure));
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
+        LazyResult<String> failureHello = hello.flatMap(s -> LazyResult.failure(failure));
         assertNotSame(hello, failureHello);
         assertSame(failure, failureHello.result().getFailures().get(0));
     }
 
     @Test
     void exceptionInFlatMapFunction() {
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
-        FutureResult<String> exceptionHello = hello.flatMap(s -> FutureResult.create(() -> {
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
+        LazyResult<String> exceptionHello = hello.flatMap(s -> LazyResult.create(() -> {
             throw runtimeException;
         }));
         assertNotSame(hello, exceptionHello);
@@ -112,19 +112,19 @@ public class FutureResultTest {
 
     @Test
     void multipleMapAndFlatFunctions() {
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
-        FutureResult<Integer> stringLength = hello
-                .flatMap(s -> FutureResult.create(s::toUpperCase))
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
+        LazyResult<Integer> stringLength = hello
+                .flatMap(s -> LazyResult.create(s::toUpperCase))
                 .map(String::toLowerCase)
-                .flatMap(s -> FutureResult.create(s::length))
+                .flatMap(s -> LazyResult.create(s::length))
                 .map(size -> size * size);
         assertEquals(25, stringLength.result().get());
     }
 
     @Test
     void canNotUseNullAsSupplierOfFunctions() {
-        assertThrows(IllegalArgumentException.class, () -> FutureResult.create(null));
-        FutureResult<String> hello = FutureResult.create(() -> ("hello"));
+        assertThrows(IllegalArgumentException.class, () -> LazyResult.create(null));
+        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
         assertThrows(IllegalArgumentException.class, () -> hello.map(null));
         assertThrows(IllegalArgumentException.class, () -> hello.flatMap(null));
     }

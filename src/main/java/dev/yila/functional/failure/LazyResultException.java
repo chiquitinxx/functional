@@ -2,11 +2,11 @@ package dev.yila.functional.failure;
 
 import java.util.List;
 
-public class FutureResultException extends RuntimeException {
+public class LazyResultException extends RuntimeException {
 
     private final List<Failure> failures;
 
-    public FutureResultException(List<Failure> failures) {
+    public LazyResultException(List<Failure> failures) {
         this.failures = failures;
     }
 
