@@ -8,7 +8,7 @@ Result<T> -> A mix between "Optional" and "Either".
 
 Mutation<T> -> To wrap a class, so all the operations in the class are thread safe.
 
-FutureResult<T> -> Lazy and asynchronous version of Result.
+LazyResult<T> -> Lazy and asynchronous version of Result.
 
 ## Dependencies
 
