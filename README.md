@@ -10,6 +10,8 @@ Mutation<T> -> To wrap a class, so all the operations in the class are thread sa
 
 LazyResult<T> -> Lazy and asynchronous version of Result.
 
+Matcher<I, O> -> Little pattern matcher evaluator for values.
+
 ## Dependencies
 
 Java 8, no more dependencies.

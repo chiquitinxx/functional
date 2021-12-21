@@ -105,8 +105,8 @@ public class LazyResult<T> {
                     this.result = executeSupplier().join();
                 }
             }
-            return this.result;
         }
+        return this.result;
     }
 
     private CompletableFuture<Result<T>> executeSupplier() {
