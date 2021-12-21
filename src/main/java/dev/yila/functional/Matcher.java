@@ -1,32 +1,27 @@
 package dev.yila.functional;
 
-import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.MatcherNotFoundFailure;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class Matcher<I, O> {
 
-    public static <Input, Output> Matcher<Input, Output> create(Input input, Class<Output> outputClass) {
+    public static <Input, Output> Matcher<Input, Output> create(Class<Input> input, Class<Output> outputClass) {
         return new Matcher<>(input, outputClass);
     }
 
-    private final I input;
-    private final Class<O> outputClass;
+    public static <Input> Function<Input, Boolean> EQ(Input integer) {
+        return input -> input.equals(integer);
+    }
+
     private List<Pair<Function<I, Boolean>, Function<I, O>>> matchers;
     private Optional<Function<I, O>> matchingFunction;
     private Function<I, Result<O>> defaultCase = (input) -> Result.failure(new MatcherNotFoundFailure(input));
 
-    private Matcher(I input, Class<O> outputClass) {
-        if (input == null) {
-            throw new IllegalArgumentException("null is not allowed for as input of a Matcher");
-        }
-        this.input = input;
-        this.outputClass = outputClass;
+    private Matcher(Class<I> inputClass, Class<O> outputClass) {
         this.matchers = new ArrayList<>();
     }
 
@@ -35,19 +30,21 @@ public class Matcher<I, O> {
         return this;
     }
 
-    public Result<O> orElse(Function<I, O> function) {
-        return getMatchingFunction()
-                .map(fun -> Result.ok(fun.apply(input)))
-                .orElseGet(() -> Result.ok(function.apply(input)));
+    public Matcher<I, O> orElse(Function<I, O> function) {
+        matchers.add(Pair.of(input -> true, function));
+        return this;
     }
 
-    public Result<O> get() {
-        return getMatchingFunction()
+    public Result<O> get(I input) {
+        if (input == null) {
+            throw new IllegalArgumentException("null is not allowed for as input");
+        }
+        return getMatchingFunction(input)
                 .map(fun -> Result.ok(fun.apply(input)))
                 .orElseGet(() -> defaultCase.apply(input));
     }
 
-    private Optional<Function<I, O>> getMatchingFunction() {
+    private Optional<Function<I, O>> getMatchingFunction(I input) {
         synchronized (this) {
             if (matchingFunction == null) {
                 matchingFunction = matchers.stream()
