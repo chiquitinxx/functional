@@ -116,6 +116,39 @@ public class ResultTest {
     }
 
     @Test
+    void failureAsExceptionThrowExceptionIfResultIsOk() {
+        Result<Integer> result = Result.ok(5);
+        assertThrows(NoSuchElementException.class, result::getFailuresAsThrowable);
+    }
+
+    @Test
+    void getFailureAsException() {
+        String exceptionMessage = "fail :(";
+        ThrowingSupplierException supplierException = () -> {
+            throw new RuntimeException(exceptionMessage);
+        };
+        Result<Integer> result = Result.createChecked(supplierException, RuntimeException.class);
+        Throwable throwable = result.getFailuresAsThrowable();
+        assertEquals(exceptionMessage, throwable.getMessage());
+    }
+
+    @Test
+    void getMultipleFailureAssException() {
+        List<Failure> failures = new ArrayList<>();
+        Exception firstException = new Exception("hello");
+        Exception secondException = new Exception("second");
+        failures.add(new ThrowableFailure(firstException));
+        failures.add(Failure.create("any", "desc"));
+        failures.add(new ThrowableFailure(secondException));
+        Result<Integer> result = Result.failures(failures);
+        Throwable throwable = result.getFailuresAsThrowable();
+        assertSame(throwable, firstException);
+        assertEquals(2, throwable.getSuppressed().length);
+        assertEquals("any: desc", throwable.getSuppressed()[0].getMessage());
+        assertSame(secondException, throwable.getSuppressed()[1]);
+    }
+
+    @Test
     void unexpectedCheckedExceptions() {
         String exceptionMessage = "fail :(";
         ThrowingSupplierException supplierException = () -> {

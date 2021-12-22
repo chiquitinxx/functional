@@ -18,7 +18,7 @@ public class MatcherTest {
             "3, other"
     })
     void matchNumbers(Integer input, String expectedResult) {
-        Matcher<Integer, String> matcher =Matcher.create(Integer.class, String.class)
+        Matcher<Integer, String> matcher = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number < 3, number -> "two")
                 .orElse(number -> "other");

@@ -161,10 +161,7 @@ public class Result<T> {
      * @return
      */
     public String getFailuresToString() {
-        return "[" + this.failures.stream()
-                .map(Failure::toString)
-                .collect(Collectors.joining(", ")) +
-                "]";
+        return showFailures(Failure::toString);
     }
 
     /**
@@ -172,8 +169,12 @@ public class Result<T> {
      * @return
      */
     public String getFailuresCode() {
+        return showFailures(Failure::getCode);
+    }
+
+    private String showFailures(Function<Failure, String> failureToString) {
         return "[" + this.failures.stream()
-                .map(Failure::getCode)
+                .map(failureToString)
                 .collect(Collectors.joining(", ")) +
                 "]";
     }
@@ -264,5 +265,30 @@ public class Result<T> {
                 .filter(Result::hasFailures)
                 .flatMap(result -> result.getFailures().stream())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get failures as a Throwable
+     * @return
+     */
+    public Throwable getFailuresAsThrowable() {
+        if (hasFailures()) {
+            return this.failures.stream().skip(1)
+                    .map(this::failureToThrowable)
+                    .reduce(failureToThrowable(this.failures.get(0)), (all, current) -> {
+                        all.addSuppressed(current);
+                        return all;
+                    });
+        } else {
+            throw new NoSuchElementException("Result has not failures");
+        }
+    }
+
+    private Throwable failureToThrowable(Failure failure) {
+        if (failure instanceof ThrowableFailure) {
+            return ((ThrowableFailure)failure).getThrowable();
+        } else {
+            return new Throwable(failure.toString());
+        }
     }
 }
