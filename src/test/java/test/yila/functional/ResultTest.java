@@ -116,13 +116,13 @@ public class ResultTest {
     }
 
     @Test
-    void failureAsExceptionThrowExceptionIfResultIsOk() {
+    void failureAsThrowableForResultOk() {
         Result<Integer> result = Result.ok(5);
         assertThrows(NoSuchElementException.class, result::getFailuresAsThrowable);
     }
 
     @Test
-    void getFailureAsException() {
+    void getFailureAsThrowable() {
         String exceptionMessage = "fail :(";
         ThrowingSupplierException supplierException = () -> {
             throw new RuntimeException(exceptionMessage);
@@ -133,7 +133,7 @@ public class ResultTest {
     }
 
     @Test
-    void getMultipleFailureAssException() {
+    void getMultipleFailureAsThrowable() {
         List<Failure> failures = new ArrayList<>();
         Exception firstException = new Exception("hello");
         Exception secondException = new Exception("second");
