@@ -45,6 +45,19 @@ public class Result<T> {
     }
 
     /**
+     * Create a new failure result from a throwable.
+     * @param throwable
+     * @param <T>
+     * @return
+     */
+    public static <T> Result<T> failure(Throwable throwable) {
+        if (throwable == null) {
+            throw new IllegalArgumentException("Fail can not be null.");
+        }
+        return new Result<>(null, Collections.singletonList(new ThrowableFailure(throwable)));
+    }
+
+    /**
      * Create a new failure result.
      * @param failures
      * @param <T>

@@ -133,6 +133,14 @@ public class ResultTest {
     }
 
     @Test
+    void throwableFailure() {
+        String exceptionMessage = "fail :(";
+        Result<Integer> result = Result.failure(new RuntimeException(exceptionMessage));
+        Throwable throwable = result.getFailuresAsThrowable();
+        assertEquals(exceptionMessage, throwable.getMessage());
+    }
+
+    @Test
     void getMultipleFailureAsThrowable() {
         List<Failure> failures = new ArrayList<>();
         Exception firstException = new Exception("hello");
@@ -161,7 +169,8 @@ public class ResultTest {
     @Test
     void canNotCreateEmptyResults() {
         assertThrows(IllegalArgumentException.class, () -> Result.ok(null));
-        assertThrows(IllegalArgumentException.class, () -> Result.failure(null));
+        assertThrows(IllegalArgumentException.class, () -> Result.failure((Throwable) null));
+        assertThrows(IllegalArgumentException.class, () -> Result.failure((Failure) null));
         assertThrows(IllegalArgumentException.class, () -> Result.failures(null));
         assertThrows(IllegalArgumentException.class, () -> Result.failures(Collections.emptyList()));
     }
