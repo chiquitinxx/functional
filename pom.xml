@@ -103,7 +103,7 @@
         <artifactId>pitest-maven</artifactId>
         <version>${pitest.version}</version>
         <configuration>
-          <coverageThreshold>99</coverageThreshold>
+          <coverageThreshold>100</coverageThreshold>
         </configuration>
         <dependencies>
           <dependency>

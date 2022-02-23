@@ -112,15 +112,12 @@ public class LazyResult<T> {
     private CompletableFuture<Result<T>> executeSupplier() {
         return this.supplier.get().handle((result, throwable) -> {
             if (throwable != null) {
-                if (throwable instanceof CompletionException) {
-                    CompletionException completionException = (CompletionException) throwable;
-                    if (throwable.getCause() instanceof LazyResultException) {
-                        return Result.failures(((LazyResultException) throwable.getCause()).getFailures());
-                    } else {
-                        return Result.failure(new ThrowableFailure(completionException.getCause()));
-                    }
+                CompletionException completionException = (CompletionException) throwable;
+                if (throwable.getCause() instanceof LazyResultException) {
+                    return Result.failures(((LazyResultException) throwable.getCause()).getFailures());
+                } else {
+                    return Result.failure(new ThrowableFailure(completionException.getCause()));
                 }
-                return Result.failure(new ThrowableFailure(throwable));
             }
             return Result.ok(result);
         });

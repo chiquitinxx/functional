@@ -110,6 +110,16 @@ public class LazyResultTest {
         assertSame(runtimeException, ((ThrowableFailure) exceptionHello.result().getFailures().get(0)).getThrowable());
     }
 
+    private int add(int number) {
+        return add(number);
+    }
+
+    @Test
+    void generateStackOverflowError() {
+        LazyResult<Integer> hello = LazyResult.create(() -> add(3));
+        assertTrue(hello.result().getFailuresAsThrowable() instanceof StackOverflowError);
+    }
+
     @Test
     void multipleMapAndFlatFunctions() {
         LazyResult<String> hello = LazyResult.create(() -> ("hello"));
