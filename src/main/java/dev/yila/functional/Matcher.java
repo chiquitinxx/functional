@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Matcher<I, O> {
 
@@ -17,22 +19,23 @@ public class Matcher<I, O> {
         return input -> input.equals(integer);
     }
 
-    private List<Pair<Function<I, Boolean>, Function<I, O>>> matchers;
-    private Optional<Function<I, O>> matchingFunction;
+    private final List<Pair<Function<I, Boolean>, Function<I, O>>> matchers;
     private Function<I, Result<O>> defaultCase = (input) -> Result.failure(new MatcherNotFoundFailure(input));
 
     private Matcher(Class<I> inputClass, Class<O> outputClass) {
         this.matchers = new ArrayList<>();
     }
 
+    private Matcher(List<Pair<Function<I, Boolean>, Function<I, O>>> matchers, Pair<Function<I, Boolean>, Function<I, O>> pair) {
+        this.matchers = Stream.concat(matchers.stream(), Stream.of(pair)).collect(Collectors.toList());
+    }
+
     public Matcher<I, O> on(Function<I, Boolean> matchFunction, Function<I, O> outputFunction) {
-        matchers.add(Pair.of(matchFunction, outputFunction));
-        return this;
+        return new Matcher<>(this.matchers, Pair.of(matchFunction, outputFunction));
     }
 
     public Matcher<I, O> orElse(Function<I, O> function) {
-        matchers.add(Pair.of(input -> true, function));
-        return this;
+        return new Matcher<>(this.matchers, Pair.of(input -> true, function));
     }
 
     public Result<O> get(I input) {
@@ -45,14 +48,9 @@ public class Matcher<I, O> {
     }
 
     private Optional<Function<I, O>> getMatchingFunction(I input) {
-        synchronized (this) {
-            if (matchingFunction == null) {
-                matchingFunction = matchers.stream()
-                        .filter(pair -> pair.getLeft().apply(input))
-                        .findFirst()
-                        .map(Pair::getRight);
-            }
-        }
-        return matchingFunction;
+        return matchers.stream()
+                    .filter(pair -> pair.getLeft().apply(input))
+                    .findFirst()
+                    .map(Pair::getRight);
     }
 }

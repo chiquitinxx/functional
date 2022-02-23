@@ -60,14 +60,24 @@ public class MatcherTest {
     }
 
     @Test
-    void changingMatcherNotChangeResult() {
+    void cannotMutateMatchers() {
         Matcher<Integer, String> matcher = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number < 3, number -> "two");
         Result<String> result = matcher.get(3);
         assertTrue(result.hasFailures());
-        matcher.on(number -> number == 3, number -> "Yes");
-        result = matcher.get(3);
-        assertTrue(result.hasFailures());
+        Matcher newMatcher = matcher.on(number -> number == 3, number -> "Yes");
+        assertTrue(matcher.get(3).hasFailures());
+        assertEquals("Yes", newMatcher.get(3).get());
+    }
+
+    @Test
+    void matcherCanBeUsedMultipleTimes() {
+        Matcher<Integer, String> matcher = Matcher.create(Integer.class, String.class)
+                .on(number -> number == 1, number -> "one")
+                .on(number -> number > 1, number -> "big");
+        assertEquals("big", matcher.get(2).get());
+        assertEquals("one", matcher.get(1).get());
+        assertEquals("big", matcher.get(3).get());
     }
 }
