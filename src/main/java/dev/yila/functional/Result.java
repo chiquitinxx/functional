@@ -206,6 +206,14 @@ public class Result<T> {
         }
     }
 
+    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunctionException<T, R, K> function, Class<K> throwableClass) {
+        if (hasFailures()) {
+            return (Result<R>) this;
+        } else {
+            return createChecked(() -> function.apply(this.value), throwableClass);
+        }
+    }
+
     /**
      * New result with the execution of the function if is success
      * @param function

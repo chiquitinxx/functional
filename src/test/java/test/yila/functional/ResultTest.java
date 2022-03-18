@@ -1,6 +1,7 @@
 package test.yila.functional;
 
 import dev.yila.functional.Result;
+import dev.yila.functional.ThrowingFunctionException;
 import dev.yila.functional.ThrowingSupplierException;
 import dev.yila.functional.failure.BasicFailure;
 import dev.yila.functional.failure.Failure;
@@ -113,6 +114,28 @@ public class ResultTest {
         assertEquals("[ThrowableFailure: java.lang.RuntimeException: fail :(]", result.getFailuresToString());
         ThrowableFailure failure = (ThrowableFailure) result.getFailures().get(0);
         assertEquals(exceptionMessage, failure.getThrowable().getMessage());
+    }
+
+    @Test
+    void checkedExceptionInFlatMapOnFail() {
+        ThrowingSupplierException supplierException = () -> {
+            throw new RuntimeException("aaa");
+        };
+        Result<Integer> result = Result.createChecked(supplierException, RuntimeException.class)
+                .flatMap(number -> {
+                    throw new RuntimeException("uuu");
+                }, RuntimeException.class);
+        assertTrue(result.getFailuresToString().contains("aaa"));
+    }
+
+    @Test
+    void checkedExceptionInFlatMap() {
+        ThrowingFunctionException functionException = (input) -> {
+            throw new RuntimeException("Fail");
+        };
+        Result<Integer> result = Result.create(() -> 3)
+                .flatMap(functionException, RuntimeException.class);
+        assertEquals("[ThrowableFailure: java.lang.RuntimeException: Fail]", result.getFailuresToString());
     }
 
     @Test
