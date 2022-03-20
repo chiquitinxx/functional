@@ -1,6 +1,7 @@
 package test.yila.functional;
 
 import dev.yila.functional.LazyResult;
+import dev.yila.functional.Result;
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -137,5 +141,36 @@ public class LazyResultTest {
         LazyResult<String> hello = LazyResult.create(() -> ("hello"));
         assertThrows(IllegalArgumentException.class, () -> hello.map(null));
         assertThrows(IllegalArgumentException.class, () -> hello.flatMap(null));
+    }
+
+    @Test
+    void canStartTheExecution() throws ExecutionException, InterruptedException {
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        LazyResult<Integer> hello = LazyResult
+                .create(() -> ("hello"))
+                .map(string -> {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ie) {
+                        ie.printStackTrace();
+                    }
+                    atomicInteger.set(1);
+                    return string.length();
+                });
+        CompletableFuture<Result<Integer>> cf = hello.start();
+        assertEquals(0, atomicInteger.get());
+        assertEquals(5, cf.get().get());
+    }
+
+    @Test
+    void startAndGetResultAtSameTime() throws ExecutionException, InterruptedException {
+        LazyResult<Integer> hello = LazyResult
+                .create(() -> ("hello"))
+                .map(String::length);
+        CompletableFuture<Result<Integer>> cf = hello.start();
+        CompletableFuture<Result<Integer>> cf2 = hello.start();
+        Result<Integer> result = hello.result();
+        assertSame(result, cf.get());
+        assertSame(result, cf2.get());
     }
 }

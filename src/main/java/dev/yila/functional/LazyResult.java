@@ -36,6 +36,7 @@ public class LazyResult<T> {
     private final Supplier<CompletableFuture<T>> supplier;
     private final List<Failure> failures;
     private Result<T> result;
+    private CompletableFuture<Result<T>> completableFuture;
 
     private LazyResult(Supplier<T> supplier) {
         this.supplier = () -> CompletableFuture.supplyAsync(supplier);
@@ -78,13 +79,20 @@ public class LazyResult<T> {
         }
     }
 
+    public synchronized CompletableFuture<Result<T>> start() {
+        if (completableFuture == null) {
+            completableFuture = executeSupplier();
+        }
+        return completableFuture;
+    }
+
     private <V> LazyResult<V> joinWithFunction(Function<T, V> function) {
-        return new LazyResult<>(() -> this.supplier.get().thenApply(function), this.failures);
+        return new LazyResult<>(() -> this.supplier.get().thenApplyAsync(function), this.failures);
     }
 
     private <V> LazyResult<V> joinWithLazyResultFunction(Function<T, LazyResult<V>> lazyResultFunction) {
-        return new LazyResult<V>(() -> this.supplier.get().thenApply(lazyResultFunction)
-                .thenApply(this::extract), this.failures);
+        return new LazyResult<V>(() -> this.supplier.get().thenApplyAsync(lazyResultFunction)
+                .thenApplyAsync(this::extract), this.failures);
     }
 
     private <V> V extract(LazyResult<V> lazyResult) {
@@ -102,7 +110,7 @@ public class LazyResult<T> {
                 if (this.failures != null) {
                     this.result = Result.failures(this.failures);
                 } else {
-                    this.result = executeSupplier().join();
+                    this.result = start().join();
                 }
             }
         }
@@ -110,7 +118,7 @@ public class LazyResult<T> {
     }
 
     private CompletableFuture<Result<T>> executeSupplier() {
-        return this.supplier.get().handle((result, throwable) -> {
+        return this.supplier.get().handleAsync((result, throwable) -> {
             if (throwable != null) {
                 CompletionException completionException = (CompletionException) throwable;
                 if (throwable.getCause() instanceof LazyResultException) {
