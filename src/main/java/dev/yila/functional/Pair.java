@@ -1,5 +1,7 @@
 package dev.yila.functional;
 
+import java.util.function.BiFunction;
+
 /**
  * Class to store 2 values
  * @param <L>
@@ -25,5 +27,9 @@ public class Pair<L, R> {
 
     public R getRight() {
         return right;
+    }
+
+    public <T> T apply(BiFunction<L, R, T> biFunction) {
+        return biFunction.apply(this.left, this.right);
     }
 }

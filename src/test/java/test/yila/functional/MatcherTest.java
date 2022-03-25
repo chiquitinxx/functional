@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static dev.yila.functional.Matcher.EQ;
+import static dev.yila.functional.Matcher.NEQ;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MatcherTest {
@@ -50,6 +51,14 @@ public class MatcherTest {
     }
 
     @Test
+    void staticMatcherNEQ() {
+        Result<String> result = Matcher.create(Integer.class, String.class)
+                .on(NEQ(2), number -> "notTwo")
+                .get(5);
+        assertEquals("notTwo", result.get());
+    }
+
+    @Test
     void matchWithoutElse() {
         Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")
@@ -78,6 +87,15 @@ public class MatcherTest {
                 .on(number -> number > 1, number -> "big");
         assertEquals("big", matcher.get(2).get());
         assertEquals("one", matcher.get(1).get());
+        assertEquals("big", matcher.get(3).get());
+    }
+
+    @Test
+    void matcherFromInitialFunctions() {
+        Matcher matcher = Matcher.from((Integer number) -> number < 2, number -> "small")
+                .orElse(number -> "big");
+        assertEquals("big", matcher.get(2).get());
+        assertEquals("small", matcher.get(1).get());
         assertEquals("big", matcher.get(3).get());
     }
 }

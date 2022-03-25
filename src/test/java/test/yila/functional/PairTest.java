@@ -13,4 +13,11 @@ public class PairTest {
         assertEquals(5, pair.getRight());
         assertEquals("hello", pair.getLeft());
     }
+
+    @Test
+    void applyFunctionToPair() {
+        Pair<String, Integer> pair = new Pair<>("hello", 5);
+        Integer result = pair.apply((left, right) -> right * 7);
+        assertEquals(35, result);
+    }
 }
