@@ -2,7 +2,6 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.MatcherNotFoundFailure;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

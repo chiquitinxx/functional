@@ -6,8 +6,6 @@ Pair<L,R> -> a class containing a pair of values
 
 Result<T> -> A mix between "Optional" and "Either".
 
-Mutation<T> -> To wrap a class, so all the operations in the class are thread safe.
-
 LazyResult<T> -> Lazy and asynchronous version of Result.
 
 Matcher<I, O> -> Little pattern matcher evaluator for values.

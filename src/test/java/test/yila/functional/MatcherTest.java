@@ -2,6 +2,7 @@ package test.yila.functional;
 
 import dev.yila.functional.Matcher;
 import dev.yila.functional.Result;
+import dev.yila.functional.failure.MatcherNotFoundFailure;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -64,7 +65,7 @@ public class MatcherTest {
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number < 3, number -> "two")
                 .get(3);
-        assertTrue(result.hasFailures());
+        assertTrue(result.hasFailure(MatcherNotFoundFailure.class));
         assertEquals("[Not found a matcher for value: 3]", result.getFailuresToString());
     }
 
