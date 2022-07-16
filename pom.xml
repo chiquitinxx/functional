@@ -57,6 +57,8 @@
     <maven.javadoc.plugin>3.3.1</maven.javadoc.plugin>
     <maven.gpg.plugin>3.0.1</maven.gpg.plugin>
     <maven.release.plugin>2.5.3</maven.release.plugin>
+    <maven.jacoco.plugin>0.7.6.201602180812</maven.jacoco.plugin>
+    <maven.coveralls.plugin>4.3.0</maven.coveralls.plugin>
   </properties>
 
   <dependencies>
@@ -112,6 +114,27 @@
             <version>${pitest.junit5.version}</version>
           </dependency>
         </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${maven.jacoco.plugin}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.eluder.coveralls</groupId>
+        <artifactId>coveralls-maven-plugin</artifactId>
+        <version>${maven.coveralls.plugin}</version>
+        <configuration>
+          <repoToken>1mthLoeXmm3UYzuymy0m6rLkWbVq0K8HN</repoToken>
+        </configuration>
       </plugin>
     </plugins>
   </build>
