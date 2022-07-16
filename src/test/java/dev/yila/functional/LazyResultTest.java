@@ -1,7 +1,5 @@
-package test.yila.functional;
+package dev.yila.functional;
 
-import dev.yila.functional.LazyResult;
-import dev.yila.functional.Result;
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;

@@ -1,8 +1,5 @@
-package test.yila.functional;
+package dev.yila.functional;
 
-import dev.yila.functional.Result;
-import dev.yila.functional.ThrowingFunctionException;
-import dev.yila.functional.ThrowingSupplierException;
 import dev.yila.functional.failure.BasicFailure;
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.ThrowableFailure;
@@ -201,8 +198,8 @@ public class ResultTest {
     @Test
     void simpleFailure() {
         Result result = Result.failure(new SimpleFailure());
-        assertTrue(result.getFailuresToString().startsWith("[test.yila.functional.ResultTest$SimpleFailure@"));
-        assertEquals("[test.yila.functional.ResultTest$SimpleFailure]", result.getFailuresCode());
+        assertTrue(result.getFailuresToString().startsWith("[dev.yila.functional.ResultTest$SimpleFailure@"));
+        assertEquals("[dev.yila.functional.ResultTest$SimpleFailure]", result.getFailuresCode());
     }
 
     static class TestException extends Exception {}

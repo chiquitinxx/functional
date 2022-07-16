@@ -1,7 +1,5 @@
-package test.yila.functional;
+package dev.yila.functional;
 
-import dev.yila.functional.Matcher;
-import dev.yila.functional.Result;
 import dev.yila.functional.failure.MatcherNotFoundFailure;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

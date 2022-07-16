@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 /**
  * Class to store the result or the failures
- * @param <T>
+ * @param <T> Type of result
  */
 public class Result<T> {
 
@@ -22,7 +22,7 @@ public class Result<T> {
      * Create a new success result.
      * @param value
      * @param <T>
-     * @return
+     * @return Result<T>
      */
     public static <T> Result<T> ok(T value) {
         if (value == null) {
@@ -35,7 +35,7 @@ public class Result<T> {
      * Create a new failure result.
      * @param failure
      * @param <T>
-     * @return
+     * @return Result<T>
      */
     public static <T> Result<T> failure(Failure failure) {
         if (failure == null) {
@@ -48,7 +48,7 @@ public class Result<T> {
      * Create a new failure result from a throwable.
      * @param throwable
      * @param <T>
-     * @return
+     * @return Result<T>
      */
     public static <T> Result<T> failure(Throwable throwable) {
         if (throwable == null) {
@@ -61,7 +61,7 @@ public class Result<T> {
      * Create a new failure result.
      * @param failures
      * @param <T>
-     * @return
+     * @return Result<T>
      */
     public static <T> Result<T> failures(List<Failure> failures) {
         if (failures == null || failures.size() < 1) {
@@ -74,7 +74,7 @@ public class Result<T> {
      * Create a Result from a supplier.
      * @param supplier
      * @param <T>
-     * @return
+     * @return Result<T>
      */
     public static <T> Result<T> create(Supplier<T> supplier) {
         return Result.ok(supplier.get());
@@ -86,7 +86,7 @@ public class Result<T> {
      * @param throwableClass
      * @param <T>
      * @param <K>
-     * @return
+     * @return Result<T>
      */
     public static <T, K extends Throwable> Result<T> createChecked(ThrowingSupplierException<T, K> throwingSupplier, Class<K> throwableClass) {
         try {
@@ -104,7 +104,7 @@ public class Result<T> {
      * Create a Result from a Supplier that return a Result
      * @param supplier
      * @param <T>
-     * @return
+     * @return Result<T>
      */
     public static <T> Result<T> flatCreate(Supplier<Result<T>> supplier) {
         return supplier.get();
@@ -116,7 +116,7 @@ public class Result<T> {
     /**
      * Join multiple Results in one Result
      * @param results
-     * @return
+     * @return Result<List>
      */
     public static Result<List> join(Result... results) {
         List okResults = Arrays.stream(results)
@@ -132,7 +132,7 @@ public class Result<T> {
 
     /**
      * Check the current result has failures.
-     * @return
+     * @return boolean
      */
     public boolean hasFailures() {
         return failures != null;
@@ -140,7 +140,8 @@ public class Result<T> {
 
     /**
      * Get success result value. Throws an exception if hasFailures.
-     * @return
+     * Avoid use this method, embrace more functional style with orElse or chaining.
+     * @return T
      */
     public T get() {
         if (hasFailures()) {
@@ -152,7 +153,7 @@ public class Result<T> {
     /**
      * Return the success result or the execution of the function if it has failures
      * @param function
-     * @return
+     * @return T
      */
     public T orElse(Function<Result<T>, T> function) {
         if (this.hasFailures()) {
@@ -163,7 +164,7 @@ public class Result<T> {
 
     /**
      * Get failures or null if is success
-     * @return
+     * @return List<Failure>
      */
     public List<Failure> getFailures() {
         return this.failures;
@@ -171,7 +172,7 @@ public class Result<T> {
 
     /**
      * Get failures as String
-     * @return
+     * @return String
      */
     public String getFailuresToString() {
         return showFailures(Failure::toString);
@@ -179,7 +180,7 @@ public class Result<T> {
 
     /**
      * Failure codes as comma separated list.
-     * @return
+     * @return String
      */
     public String getFailuresCode() {
         return showFailures(Failure::getCode);
@@ -193,10 +194,10 @@ public class Result<T> {
     }
 
     /**
-     * Map current result with a function that returns a new result.
+     * Flatten map current result with a function that returns a new result.
      * @param function will be executed if current result is success.
      * @param <R>
-     * @return
+     * @return Result<R>
      */
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
         if (hasFailures()) {
@@ -206,6 +207,15 @@ public class Result<T> {
         }
     }
 
+
+    /**
+     * Flatten map current result with a throwing function that returns a new result.
+     * @param function
+     * @param throwableClass
+     * @return Result<R>
+     * @param <R>
+     * @param <K>
+     */
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunctionException<T, R, K> function, Class<K> throwableClass) {
         if (hasFailures()) {
             return (Result<R>) this;
@@ -218,7 +228,7 @@ public class Result<T> {
      * New result with the execution of the function if is success
      * @param function
      * @param <R>
-     * @return
+     * @return Result<R>
      */
     public <R> Result<R> map(Function<T, R> function) {
         if (hasFailures()) {
@@ -231,7 +241,7 @@ public class Result<T> {
     /**
      * Execute the consumer if the result is success
      * @param consumer
-     * @return
+     * @return Result<T>
      */
     public Result<T> onSuccess(Consumer<T> consumer) {
         if (!hasFailures()) {
@@ -243,7 +253,7 @@ public class Result<T> {
     /**
      * Execute the consumer if the result has failures
      * @param consumer
-     * @return
+     * @return Result<T>
      */
     public Result<T> onFailures(Consumer<Result<T>> consumer) {
         if (hasFailures()) {
@@ -255,7 +265,7 @@ public class Result<T> {
     /**
      * Check if the result not has a failure of the provided class
      * @param failureClass
-     * @return
+     * @return boolean
      */
     public boolean notHasFailure(Class<? extends Failure> failureClass) {
         return !hasFailures() || failures.stream().noneMatch(failureClass::isInstance);
@@ -264,7 +274,7 @@ public class Result<T> {
     /**
      * Check if the result has a failure of the provided class
      * @param failureClass
-     * @return
+     * @return boolean
      */
     public boolean hasFailure(Class<? extends Failure> failureClass) {
         return hasFailures() && failures.stream().anyMatch(failureClass::isInstance);
@@ -290,7 +300,7 @@ public class Result<T> {
 
     /**
      * Get failures as a Throwable
-     * @return
+     * @return Throwable
      */
     public Throwable getFailuresAsThrowable() {
         if (hasFailures()) {

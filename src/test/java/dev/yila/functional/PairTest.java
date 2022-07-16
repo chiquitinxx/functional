@@ -1,6 +1,5 @@
-package test.yila.functional;
+package dev.yila.functional;
 
-import dev.yila.functional.Pair;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
