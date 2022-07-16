@@ -3,6 +3,9 @@ package dev.yila.functional;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,5 +51,19 @@ public class AgentTest {
                 .forEach(number -> Agent.update(id, old -> (Integer) old + number));
 
         assertEquals(4950, (int) Agent.get(id));
+    }
+
+    @Test
+    void storeAndUpdateMap() {
+        Map<String, String> map = new HashMap();
+        map.put("key", "value");
+        Id id = Agent.create(() -> map);
+        Agent.update(id, m -> {
+            m.put("key", "new");
+            return m;
+        }, Map.class);
+
+        Map<String, String> storedMap = Agent.get(id);
+        assertEquals("new", storedMap.get("key"));
     }
 }
