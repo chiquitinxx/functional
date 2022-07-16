@@ -4,8 +4,16 @@ import dev.yila.functional.Pair;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PairTest {
+
+    @Test
+    void nullAreNotAllowedAsValues() {
+        assertThrows(IllegalArgumentException.class, () -> new Pair<>(null, null));
+        assertThrows(IllegalArgumentException.class, () -> new Pair<>(1, null));
+        assertThrows(IllegalArgumentException.class, () -> new Pair<>(null, 2));
+    }
 
     @Test
     void usePair() {

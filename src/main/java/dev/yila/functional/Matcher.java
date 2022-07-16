@@ -50,7 +50,7 @@ public class Matcher<I, O> {
         return new Matcher<>(this.matchers, Pair.of(input -> true, function));
     }
 
-    public Result<O> get(I input) {
+    public Result<O> result(I input) {
         if (input == null) {
             throw new IllegalArgumentException("null is not allowed for as input");
         }

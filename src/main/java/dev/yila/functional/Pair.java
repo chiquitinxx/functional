@@ -17,6 +17,9 @@ public class Pair<L, R> {
     }
 
     public Pair(L left, R right) {
+        if (left == null || right == null) {
+            throw new IllegalArgumentException("Null is not allowed as any value for Pair.");
+        }
         this.left = left;
         this.right = right;
     }
