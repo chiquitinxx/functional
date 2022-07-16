@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/chiquitinxx/functional/badge.svg?branch=main)](https://coveralls.io/github/chiquitinxx/functional?branch=main)
+
 # functional
 
 Library with classes to improve your functional style programming experience. It offers the following classes:
