@@ -3,10 +3,7 @@ package dev.yila.functional;
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.ThrowableFailure;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -121,7 +118,7 @@ public class Result<T> {
     public static Result<List> join(Result... results) {
         List okResults = Arrays.stream(results)
                 .filter(result -> !result.hasFailures())
-                .map(Result::get)
+                .map(Result::getOrThrow)
                 .collect(Collectors.toList());
         if (okResults.size() == results.length) {
             return Result.ok(okResults);
@@ -143,9 +140,9 @@ public class Result<T> {
      * Avoid use this method, embrace more functional style with orElse or chaining.
      * @return T
      */
-    public T get() {
+    public T getOrThrow() {
         if (hasFailures()) {
-            throw new NoSuchElementException("Value not present");
+            throw new NoSuchElementException("Value not present, there are failures: " + getFailuresToString());
         }
         return value;
     }
@@ -206,7 +203,6 @@ public class Result<T> {
             return function.apply(this.value);
         }
     }
-
 
     /**
      * Flatten map current result with a throwing function that returns a new result.
@@ -282,7 +278,7 @@ public class Result<T> {
 
     @Override
     public String toString() {
-        return "Result(" + (this.hasFailures() ? "FAILURES" : "OK") + "):" +
+        return "Result(" + (this.hasFailures() ? "FAILURES" : "OK") + "): " +
                 (this.hasFailures() ? this.getFailuresToString() : value.toString());
     }
 
@@ -321,5 +317,12 @@ public class Result<T> {
         } else {
             return new Throwable(failure.toString());
         }
+    }
+
+    public Optional<T> toOptional() {
+        if (hasFailures()) {
+            return Optional.empty();
+        }
+        return Optional.of(value);
     }
 }

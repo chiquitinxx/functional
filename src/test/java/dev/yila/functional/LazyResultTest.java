@@ -21,7 +21,7 @@ public class LazyResultTest {
     @Test
     void createLazyResultFromSupplier() {
         LazyResult<String> result = LazyResult.create(() -> "again");
-        assertEquals("again", result.result().get());
+        assertEquals("again", result.result().getOrThrow());
     }
 
     @Test
@@ -29,7 +29,7 @@ public class LazyResultTest {
         LazyResult result = LazyResult.failure(failure);
         assertTrue(result.result().hasFailures());
         assertEquals(1, result.result().getFailures().size());
-        assertThrows(NoSuchElementException.class, result.result()::get);
+        assertThrows(NoSuchElementException.class, result.result()::getOrThrow);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class LazyResultTest {
         LazyResult<String> hello = LazyResult.create(() -> ("hello"));
         LazyResult<String> upperHello = hello.map(String::toUpperCase);
         assertNotSame(hello, upperHello);
-        assertEquals("HELLO", upperHello.result().get());
+        assertEquals("HELLO", upperHello.result().getOrThrow());
     }
 
     @Test
@@ -75,7 +75,7 @@ public class LazyResultTest {
                 .map(String::toUpperCase)
                 .map(String::toLowerCase)
                 .map(String::length);
-        assertEquals(5, stringLength.result().get());
+        assertEquals(5, stringLength.result().getOrThrow());
     }
 
     @Test
@@ -83,7 +83,7 @@ public class LazyResultTest {
         LazyResult<String> hello = LazyResult.create(() -> ("hello"));
         LazyResult<String> doubleHello = hello.flatMap(s -> LazyResult.create(() -> s + s));
         assertNotSame(hello, doubleHello);
-        assertEquals("hellohello", doubleHello.result().get());
+        assertEquals("hellohello", doubleHello.result().getOrThrow());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class LazyResultTest {
                 .map(String::toLowerCase)
                 .flatMap(s -> LazyResult.create(s::length))
                 .map(size -> size * size);
-        assertEquals(25, stringLength.result().get());
+        assertEquals(25, stringLength.result().getOrThrow());
     }
 
     @Test
@@ -157,7 +157,7 @@ public class LazyResultTest {
                 });
         CompletableFuture<Result<Integer>> cf = hello.start();
         assertEquals(0, atomicInteger.get());
-        assertEquals(5, cf.get().get());
+        assertEquals(5, cf.get().getOrThrow());
     }
 
     @Test

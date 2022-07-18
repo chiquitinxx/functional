@@ -24,7 +24,7 @@ public class ResultTest {
         assertTrue(result.notHasFailure(BasicFailure.class));
         result.onSuccess(number -> assertEquals(5, number));
         result.onFailures(r -> fail("never executed"));
-        assertEquals(5, result.get());
+        assertEquals(5, result.getOrThrow());
         assertEquals(5, result.orElse(r -> 0));
     }
 
@@ -36,7 +36,7 @@ public class ResultTest {
         result.onSuccess(number -> fail("never executed"));
         result.onFailures(r -> assertEquals(1, r.getFailures().size()));
         assertEquals(0, result.orElse(r -> 0));
-        assertThrows(NoSuchElementException.class, result::get);
+        assertThrows(NoSuchElementException.class, result::getOrThrow);
     }
 
     @Test
@@ -56,8 +56,8 @@ public class ResultTest {
     void chainResults() {
         Result<Integer> result = Result.ok(5);
         Result<Integer> multiplyBy3 = result.map(number -> number * 3);
-        assertEquals(15, multiplyBy3.get());
-        assertEquals(25, result.flatMap(number -> Result.ok(number * 5)).get());
+        assertEquals(15, multiplyBy3.getOrThrow());
+        assertEquals(25, result.flatMap(number -> Result.ok(number * 5)).getOrThrow());
     }
 
     @Test
@@ -65,16 +65,16 @@ public class ResultTest {
         Result joinFailure = Result.join(Result.ok(5), Result.failure(Failure.create(CODE, DESCRIPTION)));
         assertTrue(joinFailure.hasFailures());
         Result<List> join = Result.join(Result.ok(5), Result.ok(4), Result.ok(3));
-        List<Integer> numbers = join.get();
+        List<Integer> numbers = join.getOrThrow();
         assertEquals(60, numbers.stream().reduce(1, (ac, value) -> ac * value));
     }
 
     @Test
     void createResults() {
         Result<Integer> result = Result.create(() -> 7);
-        assertEquals(7, result.get());
+        assertEquals(7, result.getOrThrow());
         result = Result.flatCreate(() -> Result.ok(6));
-        assertEquals(6, result.get());
+        assertEquals(6, result.getOrThrow());
     }
 
     @Test
@@ -96,8 +96,8 @@ public class ResultTest {
     @Test
     void checkedExceptionNotThrown() {
         Result<Integer> result = Result.createChecked(() -> 5, RuntimeException.class);
-        assertEquals(5, result.get());
-        assertEquals("Result(OK):5", result.toString());
+        assertEquals(5, result.getOrThrow());
+        assertEquals("Result(OK): 5", result.toString());
     }
 
     @Test
@@ -200,6 +200,15 @@ public class ResultTest {
         Result result = Result.failure(new SimpleFailure());
         assertTrue(result.getFailuresToString().startsWith("[dev.yila.functional.ResultTest$SimpleFailure@"));
         assertEquals("[dev.yila.functional.ResultTest$SimpleFailure]", result.getFailuresCode());
+    }
+
+    @Test
+    void toOptional() {
+        Result good = Result.ok("good");
+        Result failure = Result.failure(Failure.create("failure", "result"));
+
+        assertEquals("good", good.toOptional().get());
+        assertFalse(failure.toOptional().isPresent());
     }
 
     static class TestException extends Exception {}

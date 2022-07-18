@@ -100,7 +100,7 @@ public class LazyResult<T> {
         if (result.hasFailures()) {
             throw new LazyResultException(result.getFailures());
         } else {
-            return result.get();
+            return result.getOrThrow();
         }
     }
 

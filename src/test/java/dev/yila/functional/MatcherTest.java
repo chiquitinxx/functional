@@ -23,7 +23,7 @@ public class MatcherTest {
                 .on(number -> number < 3, number -> "two")
                 .orElse(number -> "other");
         Result<String> result = matcher.result(input);
-        assertEquals(result.get(), expectedResult);
+        assertEquals(result.getOrThrow(), expectedResult);
     }
 
     @Test
@@ -38,7 +38,7 @@ public class MatcherTest {
                 .on(number -> number == 2, number -> "two")
                 .on(number -> number > 0, number -> "greaterThan0")
                 .result(2);
-        assertEquals("two", result.get());
+        assertEquals("two", result.getOrThrow());
     }
 
     @Test
@@ -46,7 +46,7 @@ public class MatcherTest {
         Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(EQ(2), number -> "two")
                 .result(2);
-        assertEquals("two", result.get());
+        assertEquals("two", result.getOrThrow());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class MatcherTest {
         Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(NEQ(2), number -> "notTwo")
                 .result(5);
-        assertEquals("notTwo", result.get());
+        assertEquals("notTwo", result.getOrThrow());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class MatcherTest {
         assertTrue(result.hasFailures());
         Matcher newMatcher = matcher.on(number -> number == 3, number -> "Yes");
         assertTrue(matcher.result(3).hasFailures());
-        assertEquals("Yes", newMatcher.result(3).get());
+        assertEquals("Yes", newMatcher.result(3).getOrThrow());
     }
 
     @Test
@@ -84,17 +84,17 @@ public class MatcherTest {
         Matcher<Integer, String> matcher = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number > 1, number -> "big");
-        assertEquals("big", matcher.result(2).get());
-        assertEquals("one", matcher.result(1).get());
-        assertEquals("big", matcher.result(3).get());
+        assertEquals("big", matcher.result(2).getOrThrow());
+        assertEquals("one", matcher.result(1).getOrThrow());
+        assertEquals("big", matcher.result(3).getOrThrow());
     }
 
     @Test
     void matcherFromInitialFunctions() {
         Matcher matcher = Matcher.from((Integer number) -> number < 2, number -> "small")
                 .orElse(number -> "big");
-        assertEquals("big", matcher.result(2).get());
-        assertEquals("small", matcher.result(1).get());
-        assertEquals("big", matcher.result(3).get());
+        assertEquals("big", matcher.result(2).getOrThrow());
+        assertEquals("small", matcher.result(1).getOrThrow());
+        assertEquals("big", matcher.result(3).getOrThrow());
     }
 }
