@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 
 public class Agent {
 
+    private Agent() {}
+
     private static Map<Id, Supplier> agents = new ConcurrentHashMap<>();
 
     /**

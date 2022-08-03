@@ -58,6 +58,16 @@ public class MatcherTest {
     }
 
     @Test
+    void staticMatcherEQAndNEQ() {
+        Result<String> result = Matcher.create(Integer.class, String.class)
+                .on(NEQ(2), number -> "notTwo")
+                .on(EQ(3), number -> "three")
+                .orElse(number -> "isTwo")
+                .result(2);
+        assertEquals("isTwo", result.getOrThrow());
+    }
+
+    @Test
     void matchWithoutElse() {
         Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")

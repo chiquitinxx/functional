@@ -21,6 +21,7 @@ public class ResultTest {
     void successResult() {
         Result<Integer> result = Result.ok(5);
         assertFalse(result.hasFailures());
+        assertFalse(result.hasFailure(Failure.class));
         assertTrue(result.notHasFailure(BasicFailure.class));
         result.onSuccess(number -> assertEquals(5, number));
         result.onFailures(r -> fail("never executed"));
@@ -83,6 +84,7 @@ public class ResultTest {
         Result<Integer> mapResult = result.map(number -> number * 2);
         assertTrue(mapResult.hasFailures());
         assertSame(result, mapResult);
+        assertEquals("Result(FAILURES): [someCode: some description]", result.toString());
     }
 
     @Test
@@ -200,6 +202,8 @@ public class ResultTest {
         Result result = Result.failure(new SimpleFailure());
         assertTrue(result.getFailuresToString().startsWith("[dev.yila.functional.ResultTest$SimpleFailure@"));
         assertEquals("[dev.yila.functional.ResultTest$SimpleFailure]", result.getFailuresCode());
+        assertFalse(result.hasFailure(ThrowableFailure.class));
+        assertFalse(result.notHasFailure(SimpleFailure.class));
     }
 
     @Test

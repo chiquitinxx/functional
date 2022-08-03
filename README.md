@@ -16,7 +16,7 @@ Matcher<I, O> -> Little pattern matcher evaluator for values.
 
 Java 8, no more dependencies.
 
-## Run pitest coverage
+## Run pitest mutation coverage
 
 mvn clean verify org.pitest:pitest-maven:mutationCoverage
 
