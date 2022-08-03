@@ -9,18 +9,18 @@ public class Agent {
 
     private Agent() {}
 
-    private static Map<Id, Supplier> agents = new ConcurrentHashMap<>();
+    private static Map<Id<?>, Supplier<?>> agents = new ConcurrentHashMap<>();
 
     /**
      * Store object and returns reference to get it.
      * @param supplier of immutable object
      * @return Id
      */
-    public static Id create(Supplier supplier) {
+    public static <T> Id<T> create(Supplier<T> supplier) {
         if (supplier == null) {
             throw new IllegalArgumentException("Null supplier is not allowed for Agent.");
         }
-        Id id = new Id();
+        Id<T> id = new Id<>();
         agents.put(id, supplier);
         return id;
     }
@@ -31,7 +31,7 @@ public class Agent {
      * @return
      * @param <T>
      */
-    public static <T> T get(Id id) {
+    public static <T> T get(Id<T> id) {
         return (T) agents.getOrDefault(id, () -> {
             throw new IllegalArgumentException("Invalid Id");
         }).get();
@@ -43,16 +43,16 @@ public class Agent {
      * @param function
      * @return
      */
-    public static Id update(Id id, Function function) {
+    public static <T> Id<T> update(Id<T> id, Function<T, T> function) {
         synchronized (id) {
-            Object previousValue = agents.get(id).get();
-            Object newValue = function.apply(previousValue);
+            T previousValue = (T) agents.get(id).get();
+            T newValue = function.apply(previousValue);
             agents.put(id, () -> newValue);
         }
         return id;
     }
 
-    public static <T> Id update(Id id, Function<T, T> function, Class<T> clazz) {
-        return update(id, function);
+    static class Id<T> {
+        Id() {}
     }
 }

@@ -14,7 +14,7 @@ public class AgentTest {
 
     @Test
     void storeAndGetSomething() {
-        Id id = Agent.create(() -> "something");
+        Agent.Id<String> id = Agent.create(() -> "something");
         assertEquals("something", Agent.get(id));
     }
 
@@ -25,44 +25,44 @@ public class AgentTest {
 
     @Test
     void idsAreDifferent() {
-        Id id = Agent.create(() -> "something");
-        Id other = Agent.create(() -> "something");
+        Agent.Id<String> id = Agent.create(() -> "something");
+        Agent.Id<String> other = Agent.create(() -> "something");
         assertNotSame(id, other);
         assertNotEquals(id, other);
     }
 
     @Test
     void updateAgent() {
-        Id id = Agent.create(() -> "something");
-        Id updated = Agent.update(id, old -> "new");
+        Agent.Id<String> id = Agent.create(() -> "something");
+        Agent.Id<String> updated = Agent.update(id, old -> old + " new");
 
         assertSame(id, updated);
-        assertEquals("new", Agent.get(id));
+        assertEquals("something new", Agent.get(id));
     }
 
     @Test
     void getValueOfUnknownAgent() {
-        assertThrows(IllegalArgumentException.class, () -> Agent.get(new Id()));
+        assertThrows(IllegalArgumentException.class, () -> Agent.get(new Agent.Id()));
     }
 
     @RepeatedTest(5)
     void updateConcurrently() {
-        Id id = Agent.create(() -> 0);
+        Agent.Id<Integer> id = Agent.create(() -> 0);
         IntStream.range(1, 100).parallel()
-                .forEach(number -> Agent.update(id, old -> (Integer) old + number));
+                .forEach(number -> Agent.update(id, old -> old + number));
 
         assertEquals(4950, (int) Agent.get(id));
     }
 
     @Test
     void storeAndUpdateMap() {
-        Map<String, String> map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         map.put("key", "value");
-        Id id = Agent.create(() -> map);
+        Agent.Id<Map<String, String>> id = Agent.create(() -> map);
         Agent.update(id, m -> {
             m.put("key", "new");
             return m;
-        }, Map.class);
+        });
 
         Map<String, String> storedMap = Agent.get(id);
         assertEquals("new", storedMap.get("key"));
@@ -71,8 +71,8 @@ public class AgentTest {
     @Test
     void storeAndUpdateImmutable() {
         BigDecimal bigDecimal = new BigDecimal("5");
-        Id id = Agent.create(() -> bigDecimal);
-        Agent.update(id, number -> number.pow(2), BigDecimal.class);
+        Agent.Id<BigDecimal> id = Agent.create(() -> bigDecimal);
+        Agent.update(id, number -> number.pow(2));
 
         BigDecimal updated = Agent.get(id);
         assertEquals(25, updated.intValue());
