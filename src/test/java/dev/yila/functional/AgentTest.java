@@ -3,6 +3,7 @@ package dev.yila.functional;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -27,6 +28,7 @@ public class AgentTest {
         Id id = Agent.create(() -> "something");
         Id other = Agent.create(() -> "something");
         assertNotSame(id, other);
+        assertNotEquals(id, other);
     }
 
     @Test
@@ -64,5 +66,16 @@ public class AgentTest {
 
         Map<String, String> storedMap = Agent.get(id);
         assertEquals("new", storedMap.get("key"));
+    }
+
+    @Test
+    void storeAndUpdateImmutable() {
+        BigDecimal bigDecimal = new BigDecimal("5");
+        Id id = Agent.create(() -> bigDecimal);
+        Agent.update(id, number -> number.pow(2), BigDecimal.class);
+
+        BigDecimal updated = Agent.get(id);
+        assertEquals(25, updated.intValue());
+        assertNotSame(bigDecimal, updated);
     }
 }

@@ -22,7 +22,5 @@ jobs:
         java-version: 8
     - name: Build with Maven
       run: mvn clean -B verify package --file pom.xml
-    - name: Run PiTest
-      run: mvn -B clean verify org.pitest:pitest-maven:mutationCoverage --file pom.xml
     - name: Run Coveralls
       run: mvn -B clean verify jacoco:report coveralls:report --file pom.xml

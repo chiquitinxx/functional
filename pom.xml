@@ -104,9 +104,6 @@
         <groupId>org.pitest</groupId>
         <artifactId>pitest-maven</artifactId>
         <version>${pitest.version}</version>
-        <configuration>
-          <coverageThreshold>100</coverageThreshold>
-        </configuration>
         <dependencies>
           <dependency>
             <groupId>org.pitest</groupId>
