@@ -1,4 +1,4 @@
-package dev.yila.functional;
+package dev.yila.functional.agent;
 
 import java.util.function.Function;
 
@@ -15,7 +15,8 @@ public class Agent {
         if (value == null) {
             throw new IllegalArgumentException("Null value is not allowed for Agent.");
         }
-        return new Id<>(value);
+        Id<T> id = new Id<>(value);
+        return id;
     }
 
     /**
@@ -25,7 +26,7 @@ public class Agent {
      * @param <T>
      */
     public static <T> T get(Id<T> id) {
-        return id.value;
+        return (T) id.getValue();
     }
 
     /**
@@ -36,18 +37,8 @@ public class Agent {
      */
     public static <T> Id<T> update(Id<T> id, Function<T, T> function) {
         synchronized (id) {
-            T previousValue = (T) id.value;
-            T newValue = function.apply(previousValue);
-            id.value = newValue;
+            id.apply(function);
         }
         return id;
-    }
-
-    static class Id<T> {
-        private T value;
-
-        private Id(T value) {
-            this.value = value;
-        }
     }
 }
