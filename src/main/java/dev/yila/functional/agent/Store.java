@@ -3,12 +3,16 @@ package dev.yila.functional.agent;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class Id<T> {
+public class Store<T> {
 
     private volatile CompletableFuture<T> completableFuture;
 
-    Id(T initialValue) {
+    Store(T initialValue) {
         this.completableFuture = CompletableFuture.completedFuture(initialValue);
+    }
+
+    Store(CompletableFuture<T> completableFuture) {
+        this.completableFuture = completableFuture;
     }
 
     T getValue() {

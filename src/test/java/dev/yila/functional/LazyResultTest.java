@@ -171,13 +171,4 @@ public class LazyResultTest {
         assertSame(result, cf.get());
         assertSame(result, cf2.get());
     }
-
-    @Test
-    void flatMapWithCheckedException() {
-        ThrowingFunctionException<Integer, Integer, RuntimeException> function =
-                (input) -> input + 2;
-        Result<Integer> result = Result.ok(6)
-                .flatMap(function, RuntimeException.class);
-        assertEquals(8, result.getOrThrow());
-    }
 }

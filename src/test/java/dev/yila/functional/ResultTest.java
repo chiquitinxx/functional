@@ -215,6 +215,15 @@ public class ResultTest {
         assertFalse(failure.toOptional().isPresent());
     }
 
+    @Test
+    void flatMapWithCheckedException() {
+        ThrowingFunctionException<Integer, Integer, RuntimeException> function =
+                (input) -> input + 2;
+        Result<Integer> result = Result.ok(6)
+                .flatMap(function, RuntimeException.class);
+        assertEquals(8, result.getOrThrow());
+    }
+
     static class TestException extends Exception {}
 
     static class SimpleFailure implements Failure {}

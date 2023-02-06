@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,62 +16,77 @@ public class AgentTest {
 
     @Test
     void storeAndGetSomething() {
-        Id<String> id = Agent.create("something");
-        assertEquals("something", Agent.get(id));
+        Store<String> something = Agent.create("something");
+        assertEquals("something", Agent.get(something));
+    }
+
+    @Test
+    void storeCompletableFuture() {
+        Store<String> something = Agent.create(CompletableFuture.completedFuture("something"));
+        assertEquals("something", Agent.get(something));
+    }
+
+    @Test
+    void storeFailingCompletableFuture() {
+        Store<String> something = Agent.create(CompletableFuture.supplyAsync(() -> {
+            throw new RuntimeException();
+        }));
+        assertThrows(CompletionException.class, () -> Agent.get(something));
     }
 
     @Test
     void cannotCreateAgentWithNullSupplier() {
-        assertThrows(IllegalArgumentException.class, () -> Agent.create(null));
+        assertThrows(IllegalArgumentException.class, () -> Agent.create((String) null));
+        assertThrows(IllegalArgumentException.class, () -> Agent.create((CompletableFuture) null));
     }
 
     @Test
     void idsAreDifferent() {
-        Id<String> id = Agent.create("something");
-        Id<String> other = Agent.create("something");
-        assertNotSame(id, other);
-        assertNotEquals(id, other);
+        Store<String> string = Agent.create("something");
+        Store<String> other = Agent.create("something");
+        assertNotSame(string, other);
+        assertNotEquals(string, other);
     }
 
     @Test
     void updateAgent() {
-        Id<String> id = Agent.create("something");
-        Id<String> updated = Agent.update(id, old -> old + " new");
+        Store<String> string = Agent.create("something");
+        Store<String> updated = Agent.update(string, old -> old + " new");
 
-        assertSame(id, updated);
-        assertEquals("something new", Agent.get(id));
+        assertSame(string, updated);
+        assertEquals("something new", Agent.get(string));
     }
 
     @RepeatedTest(5)
     void updateConcurrently() {
-        Id<Integer> id = Agent.create(0);
+        Store<Integer> number = Agent.create(0);
         IntStream.range(1, 100).parallel()
-                .forEach(number -> Agent.update(id, old -> old + number));
+                .forEach(n -> Agent.update(number, old -> old + n));
 
-        assertEquals(4950, (int) Agent.get(id));
+        assertEquals(4950, (int) Agent.get(number));
     }
 
     @Test
     void storeAndUpdateMap() {
         Map<String, String> map = new HashMap<>();
         map.put("key", "value");
-        Id<Map<String, String>> id = Agent.create(map);
-        Agent.update(id, m -> {
+        Store<Map<String, String>> mapStore = Agent.create(map);
+        Agent.update(mapStore, m -> {
             m.put("key", "new");
             return m;
         });
 
-        Map<String, String> storedMap = Agent.get(id);
+        Map<String, String> storedMap = Agent.get(mapStore);
         assertEquals("new", storedMap.get("key"));
     }
 
     @Test
     void storeAndUpdateImmutable() {
         BigDecimal bigDecimal = new BigDecimal("5");
-        Id<BigDecimal> id = Agent.create(bigDecimal);
-        Agent.update(id, number -> number.pow(2));
+        Store<BigDecimal> bigdecimal = Agent.create(bigDecimal);
+        Agent.update(bigdecimal, number -> number.pow(2));
 
-        BigDecimal updated = Agent.get(id);
+        BigDecimal updated = Agent.get(bigdecimal);
         assertEquals(25, updated.intValue());
         assertNotSame(bigDecimal, updated);
     }

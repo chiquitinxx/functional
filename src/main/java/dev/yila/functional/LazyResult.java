@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 /**
  * LazyResult executes suppliers and consecutive functions asynchronously.
- * The result is lazy, and only start computing after result() is called.
+ * The result is lazy, and only begins computing after result() or start() is called.
  * @param <T>
  */
 public class LazyResult<T> {

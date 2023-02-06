@@ -1,5 +1,6 @@
 package dev.yila.functional.agent;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class Agent {
@@ -11,34 +12,48 @@ public class Agent {
      * @param value to store, immutable if possible
      * @return Id
      */
-    public static <T> Id<T> create(T value) {
+    public static <T> Store<T> create(T value) {
         if (value == null) {
             throw new IllegalArgumentException("Null value is not allowed for Agent.");
         }
-        Id<T> id = new Id<>(value);
-        return id;
+        Store<T> store = new Store<>(value);
+        return store;
     }
 
     /**
-     * Get immutable object stored for an id.
-     * @param id
+     * Store completable future and returns reference to get the result.
+     * @param completableFuture
      * @return
      * @param <T>
      */
-    public static <T> T get(Id<T> id) {
-        return (T) id.getValue();
+    public static <T> Store<T> create(CompletableFuture<T> completableFuture) {
+        if (completableFuture == null) {
+            throw new IllegalArgumentException("Null value is not allowed for Agent.");
+        }
+        Store<T> store = new Store<>(completableFuture);
+        return store;
     }
 
     /**
-     * Change object stored for the id.
-     * @param id
+     * Get immutable object stored for an store.
+     * @param store
+     * @return
+     * @param <T>
+     */
+    public static <T> T get(Store<T> store) {
+        return (T) store.getValue();
+    }
+
+    /**
+     * Change object saved in the store.
+     * @param store
      * @param function
      * @return
      */
-    public static <T> Id<T> update(Id<T> id, Function<T, T> function) {
-        synchronized (id) {
-            id.apply(function);
+    public static <T> Store<T> update(Store<T> store, Function<T, T> function) {
+        synchronized (store) {
+            store.apply(function);
         }
-        return id;
+        return store;
     }
 }
