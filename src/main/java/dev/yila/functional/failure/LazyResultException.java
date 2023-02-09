@@ -4,13 +4,13 @@ import java.util.List;
 
 public class LazyResultException extends RuntimeException {
 
-    private final List<Failure> failures;
+    private final Failure failure;
 
-    public LazyResultException(List<Failure> failures) {
-        this.failures = failures;
+    public LazyResultException(Failure failure) {
+        this.failure = failure;
     }
 
-    public List<Failure> getFailures() {
-        return failures;
+    public Failure getFailure() {
+        return failure;
     }
 }

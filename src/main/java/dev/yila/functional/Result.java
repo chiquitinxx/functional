@@ -1,17 +1,21 @@
 package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
+import dev.yila.functional.failure.MultipleFailures;
 import dev.yila.functional.failure.ThrowableFailure;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * Class to store the result or the failures
- * @param <T> Type of result
+ * Class to store the result value or the failure
+ * @param <T> Type of result value
  */
 public class Result<T> {
 
@@ -38,7 +42,7 @@ public class Result<T> {
         if (failure == null) {
             throw new IllegalArgumentException("Fail can not be null.");
         }
-        return new Result<>(null, Collections.singletonList(failure));
+        return new Result<>(null, failure);
     }
 
     /**
@@ -51,7 +55,7 @@ public class Result<T> {
         if (throwable == null) {
             throw new IllegalArgumentException("Fail can not be null.");
         }
-        return new Result<>(null, Collections.singletonList(new ThrowableFailure(throwable)));
+        return new Result<>(null, new ThrowableFailure(throwable));
     }
 
     /**
@@ -64,7 +68,7 @@ public class Result<T> {
         if (failures == null || failures.size() < 1) {
             throw new IllegalArgumentException("Failures list can not be null.");
         }
-        return new Result<>(null, Collections.unmodifiableList(failures));
+        return new Result<>(null, new MultipleFailures(failures));
     }
 
     /**
@@ -108,7 +112,7 @@ public class Result<T> {
     }
 
     private final T value;
-    private final List<Failure> failures;
+    private final Failure failure;
 
     /**
      * Join multiple Results in one Result
@@ -117,7 +121,7 @@ public class Result<T> {
      */
     public static Result<List> join(Result... results) {
         List okResults = Arrays.stream(results)
-                .filter(result -> !result.hasFailures())
+                .filter(result -> !result.hasFailure())
                 .map(Result::getOrThrow)
                 .collect(Collectors.toList());
         if (okResults.size() == results.length) {
@@ -131,8 +135,8 @@ public class Result<T> {
      * Check the current result has failures.
      * @return boolean
      */
-    public boolean hasFailures() {
-        return failures != null;
+    public boolean hasFailure() {
+        return failure != null;
     }
 
     /**
@@ -141,8 +145,8 @@ public class Result<T> {
      * @return T
      */
     public T getOrThrow() {
-        if (hasFailures()) {
-            throw new NoSuchElementException("Value not present, there are failures: " + getFailuresToString());
+        if (hasFailure()) {
+            throw new NoSuchElementException("Value not present, failure: " + failure.toString());
         }
         return value;
     }
@@ -153,7 +157,7 @@ public class Result<T> {
      * @return T
      */
     public T orElse(Function<Result<T>, T> function) {
-        if (this.hasFailures()) {
+        if (this.hasFailure()) {
             return function.apply(this);
         }
         return value;
@@ -163,31 +167,8 @@ public class Result<T> {
      * Get failures or null if is success
      * @return List<Failure>
      */
-    public List<Failure> getFailures() {
-        return this.failures;
-    }
-
-    /**
-     * Get failures as String
-     * @return String
-     */
-    public String getFailuresToString() {
-        return showFailures(Failure::toString);
-    }
-
-    /**
-     * Failure codes as comma separated list.
-     * @return String
-     */
-    public String getFailuresCode() {
-        return showFailures(Failure::getCode);
-    }
-
-    private String showFailures(Function<Failure, String> failureToString) {
-        return "[" + this.failures.stream()
-                .map(failureToString)
-                .collect(Collectors.joining(", ")) +
-                "]";
+    public Optional<Failure> failure() {
+        return Optional.ofNullable(this.failure);
     }
 
     /**
@@ -197,7 +178,7 @@ public class Result<T> {
      * @return Result<R>
      */
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
-        if (hasFailures()) {
+        if (hasFailure()) {
             return (Result<R>) this;
         } else {
             return function.apply(this.value);
@@ -213,7 +194,7 @@ public class Result<T> {
      * @param <K>
      */
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunctionException<T, R, K> function, Class<K> throwableClass) {
-        if (hasFailures()) {
+        if (hasFailure()) {
             return (Result<R>) this;
         } else {
             return createChecked(() -> function.apply(this.value), throwableClass);
@@ -227,7 +208,7 @@ public class Result<T> {
      * @return Result<R>
      */
     public <R> Result<R> map(Function<T, R> function) {
-        if (hasFailures()) {
+        if (hasFailure()) {
             return (Result<R>) this;
         } else {
             return Result.ok(function.apply(this.value));
@@ -240,7 +221,7 @@ public class Result<T> {
      * @return Result<T>
      */
     public Result<T> onSuccess(Consumer<T> consumer) {
-        if (!hasFailures()) {
+        if (!hasFailure()) {
             consumer.accept(this.value);
         }
         return this;
@@ -251,78 +232,39 @@ public class Result<T> {
      * @param consumer
      * @return Result<T>
      */
-    public Result<T> onFailures(Consumer<Result<T>> consumer) {
-        if (hasFailures()) {
+    public Result<T> onFailure(Consumer<Result<T>> consumer) {
+        if (hasFailure()) {
             consumer.accept(this);
         }
         return this;
     }
 
-    /**
-     * Check if the result not has a failure of the provided class
-     * @param failureClass
-     * @return boolean
-     */
-    public boolean notHasFailure(Class<? extends Failure> failureClass) {
-        return !hasFailures() || failures.stream().noneMatch(failureClass::isInstance);
-    }
-
-    /**
-     * Check if the result has a failure of the provided class
-     * @param failureClass
-     * @return boolean
-     */
-    public boolean hasFailure(Class<? extends Failure> failureClass) {
-        return hasFailures() && failures.stream().anyMatch(failureClass::isInstance);
-    }
-
     @Override
     public String toString() {
-        return "Result(" + (this.hasFailures() ? "FAILURES" : "OK") + "): " +
-                (this.hasFailures() ? this.getFailuresToString() : value.toString());
+        return "Result(" + (this.hasFailure() ? "FAILURE" : "OK") + "): " +
+                (this.hasFailure() ? this.failure.toString() : value.toString());
     }
 
-    private Result(T value, List<Failure> failures) {
+    /**
+     * Get value in the result.
+     * @return
+     */
+    public Optional<T> value() {
+        if (hasFailure()) {
+            return Optional.empty();
+        }
+        return Optional.of(value);
+    }
+
+    private Result(T value, Failure failure) {
         this.value = value;
-        this.failures = failures;
+        this.failure = failure;
     }
 
     private static List<Failure> joinFailures(List<Result<?>> results) {
         return results.stream()
-                .filter(Result::hasFailures)
-                .flatMap(result -> result.getFailures().stream())
+                .filter(Result::hasFailure)
+                .map(result -> result.failure().get())
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Get failures as a Throwable
-     * @return Throwable
-     */
-    public Throwable getFailuresAsThrowable() {
-        if (hasFailures()) {
-            return this.failures.stream().skip(1)
-                    .map(this::failureToThrowable)
-                    .reduce(failureToThrowable(this.failures.get(0)), (all, current) -> {
-                        all.addSuppressed(current);
-                        return all;
-                    });
-        } else {
-            throw new NoSuchElementException("Result has not failures");
-        }
-    }
-
-    private Throwable failureToThrowable(Failure failure) {
-        if (failure instanceof ThrowableFailure) {
-            return ((ThrowableFailure)failure).getThrowable();
-        } else {
-            return new Throwable(failure.toString());
-        }
-    }
-
-    public Optional<T> toOptional() {
-        if (hasFailures()) {
-            return Optional.empty();
-        }
-        return Optional.of(value);
     }
 }

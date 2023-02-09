@@ -1,7 +1,7 @@
 package dev.yila.functional;
 
-import dev.yila.functional.failure.BasicFailure;
 import dev.yila.functional.failure.Failure;
+import dev.yila.functional.failure.MultipleFailures;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
@@ -20,11 +20,9 @@ public class ResultTest {
     @Test
     void successResult() {
         Result<Integer> result = Result.ok(5);
-        assertFalse(result.hasFailures());
-        assertFalse(result.hasFailure(Failure.class));
-        assertTrue(result.notHasFailure(BasicFailure.class));
+        assertFalse(result.hasFailure());
         result.onSuccess(number -> assertEquals(5, number));
-        result.onFailures(r -> fail("never executed"));
+        result.onFailure(r -> fail("never executed"));
         assertEquals(5, result.getOrThrow());
         assertEquals(5, result.orElse(r -> 0));
     }
@@ -32,10 +30,9 @@ public class ResultTest {
     @Test
     void failureResult() {
         Result<Integer> result = Result.failure(Failure.create(CODE, DESCRIPTION));
-        assertTrue(result.hasFailures());
-        assertTrue(result.hasFailure(BasicFailure.class));
+        assertTrue(result.hasFailure());
         result.onSuccess(number -> fail("never executed"));
-        result.onFailures(r -> assertEquals(1, r.getFailures().size()));
+        result.onFailure(r -> assertEquals(result.failure().get(), r.failure().get()));
         assertEquals(0, result.orElse(r -> 0));
         assertThrows(NoSuchElementException.class, result::getOrThrow);
     }
@@ -46,11 +43,9 @@ public class ResultTest {
         failures.add(new SomeFailure());
         failures.add(Failure.create(CODE, DESCRIPTION));
         Result result = Result.failures(failures);
-        assertTrue(result.hasFailure(SomeFailure.class));
-        assertEquals(2, result.getFailures().size());
-        assertTrue(result.getFailures().get(0) instanceof SomeFailure);
-        assertEquals("[Some failure, someCode: some description]", result.getFailuresToString());
-        assertEquals("[some.failure.code, someCode]", result.getFailuresCode());
+        Failure multipleFailure = (Failure) result.failure().get();
+        assertTrue(multipleFailure instanceof MultipleFailures);
+        assertEquals("[Some failure, someCode: some description]", multipleFailure.toString());
     }
 
     @Test
@@ -64,7 +59,7 @@ public class ResultTest {
     @Test
     void joinResults() {
         Result joinFailure = Result.join(Result.ok(5), Result.failure(Failure.create(CODE, DESCRIPTION)));
-        assertTrue(joinFailure.hasFailures());
+        assertTrue(joinFailure.hasFailure());
         Result<List> join = Result.join(Result.ok(5), Result.ok(4), Result.ok(3));
         List<Integer> numbers = join.getOrThrow();
         assertEquals(60, numbers.stream().reduce(1, (ac, value) -> ac * value));
@@ -82,16 +77,16 @@ public class ResultTest {
     void nothingHappensMapFailure() {
         Result<Integer> result = Result.failure(Failure.create(CODE, DESCRIPTION));
         Result<Integer> mapResult = result.map(number -> number * 2);
-        assertTrue(mapResult.hasFailures());
+        assertTrue(mapResult.hasFailure());
         assertSame(result, mapResult);
-        assertEquals("Result(FAILURES): [someCode: some description]", result.toString());
+        assertEquals("Result(FAILURE): someCode: some description", result.toString());
     }
 
     @Test
     void nothingHappensFlatMapFailure() {
         Result<Integer> result = Result.failure(Failure.create(CODE, DESCRIPTION));
         Result<Integer> mapResult = result.flatMap(number -> Result.ok(number * 2));
-        assertTrue(mapResult.hasFailures());
+        assertTrue(mapResult.hasFailure());
         assertSame(result, mapResult);
     }
 
@@ -109,9 +104,8 @@ public class ResultTest {
             throw new RuntimeException(exceptionMessage);
         };
         Result<Integer> result = Result.createChecked(supplierException, RuntimeException.class);
-        assertTrue(result.hasFailure(ThrowableFailure.class));
-        assertEquals("[ThrowableFailure: java.lang.RuntimeException: fail :(]", result.getFailuresToString());
-        ThrowableFailure failure = (ThrowableFailure) result.getFailures().get(0);
+        assertEquals("ThrowableFailure: java.lang.RuntimeException: fail :(", result.failure().get().toString());
+        ThrowableFailure failure = (ThrowableFailure) result.failure().get();
         assertEquals(exceptionMessage, failure.getThrowable().getMessage());
     }
 
@@ -124,7 +118,7 @@ public class ResultTest {
                 .flatMap(number -> {
                     throw new RuntimeException("uuu");
                 }, RuntimeException.class);
-        assertTrue(result.getFailuresToString().contains("aaa"));
+        assertTrue(result.failure().get().toString().contains("aaa"));
     }
 
     @Test
@@ -134,13 +128,7 @@ public class ResultTest {
         };
         Result<Integer> result = Result.create(() -> 3)
                 .flatMap(functionException, RuntimeException.class);
-        assertEquals("[ThrowableFailure: java.lang.RuntimeException: Fail]", result.getFailuresToString());
-    }
-
-    @Test
-    void failureAsThrowableForResultOk() {
-        Result<Integer> result = Result.ok(5);
-        assertThrows(NoSuchElementException.class, result::getFailuresAsThrowable);
+        assertEquals("ThrowableFailure: java.lang.RuntimeException: Fail", result.failure().get().toString());
     }
 
     @Test
@@ -150,7 +138,7 @@ public class ResultTest {
             throw new RuntimeException(exceptionMessage);
         };
         Result<Integer> result = Result.createChecked(supplierException, RuntimeException.class);
-        Throwable throwable = result.getFailuresAsThrowable();
+        Throwable throwable = result.failure().get().toThrowable();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
 
@@ -158,24 +146,8 @@ public class ResultTest {
     void throwableFailure() {
         String exceptionMessage = "fail :(";
         Result<Integer> result = Result.failure(new RuntimeException(exceptionMessage));
-        Throwable throwable = result.getFailuresAsThrowable();
+        Throwable throwable = result.failure().get().toThrowable();
         assertEquals(exceptionMessage, throwable.getMessage());
-    }
-
-    @Test
-    void getMultipleFailureAsThrowable() {
-        List<Failure> failures = new ArrayList<>();
-        Exception firstException = new Exception("hello");
-        Exception secondException = new Exception("second");
-        failures.add(new ThrowableFailure(firstException));
-        failures.add(Failure.create("any", "desc"));
-        failures.add(new ThrowableFailure(secondException));
-        Result<Integer> result = Result.failures(failures);
-        Throwable throwable = result.getFailuresAsThrowable();
-        assertSame(throwable, firstException);
-        assertEquals(2, throwable.getSuppressed().length);
-        assertEquals("any: desc", throwable.getSuppressed()[0].getMessage());
-        assertSame(secondException, throwable.getSuppressed()[1]);
     }
 
     @Test
@@ -200,10 +172,7 @@ public class ResultTest {
     @Test
     void simpleFailure() {
         Result result = Result.failure(new SimpleFailure());
-        assertTrue(result.getFailuresToString().startsWith("[dev.yila.functional.ResultTest$SimpleFailure@"));
-        assertEquals("[dev.yila.functional.ResultTest$SimpleFailure]", result.getFailuresCode());
-        assertFalse(result.hasFailure(ThrowableFailure.class));
-        assertFalse(result.notHasFailure(SimpleFailure.class));
+        assertTrue(result.failure().get().toString().startsWith("dev.yila.functional.ResultTest$SimpleFailure@"));
     }
 
     @Test
@@ -211,8 +180,9 @@ public class ResultTest {
         Result good = Result.ok("good");
         Result failure = Result.failure(Failure.create("failure", "result"));
 
-        assertEquals("good", good.toOptional().get());
-        assertFalse(failure.toOptional().isPresent());
+        assertEquals("good", good.value().get());
+        assertFalse(failure.value().isPresent());
+        assertEquals("failure", ((Failure) failure.failure().get()).getCode());
     }
 
     @Test

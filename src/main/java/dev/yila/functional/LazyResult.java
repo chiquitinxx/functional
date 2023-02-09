@@ -4,8 +4,6 @@ import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.LazyResultException;
 import dev.yila.functional.failure.ThrowableFailure;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -26,30 +24,26 @@ public class LazyResult<T> {
     }
 
     public static LazyResult failure(Failure failure) {
-        return new LazyResult(Collections.singletonList(failure));
-    }
-
-    public static LazyResult failures(List<Failure> failures) {
-        return new LazyResult(failures);
+        return new LazyResult(failure);
     }
 
     private final Supplier<CompletableFuture<T>> supplier;
-    private final List<Failure> failures;
+    private final Failure failure;
     private Result<T> result;
     private CompletableFuture<Result<T>> completableFuture;
 
     private LazyResult(Supplier<T> supplier) {
         this.supplier = () -> CompletableFuture.supplyAsync(supplier);
-        this.failures = null;
+        this.failure = null;
     }
 
-    private LazyResult(Supplier<CompletableFuture<T>> supplier, List<Failure> failures) {
+    private LazyResult(Supplier<CompletableFuture<T>> supplier, Failure failure) {
         this.supplier = supplier;
-        this.failures = failures;
+        this.failure = failure;
     }
 
-    private LazyResult(List<Failure> failures) {
-        this.failures = failures;
+    private LazyResult(Failure failure) {
+        this.failure = failure;
         this.supplier = null;
     }
 
@@ -61,8 +55,8 @@ public class LazyResult<T> {
         if (function == null) {
             throw new IllegalArgumentException("null is not a valid function to use LazyResult.map");
         }
-        if (this.failures != null) {
-            return LazyResult.failures(this.failures);
+        if (this.failure != null) {
+            return LazyResult.failure(this.failure);
         } else {
             return joinWithFunction(function);
         }
@@ -72,8 +66,8 @@ public class LazyResult<T> {
         if (lazyResultFunction == null) {
             throw new IllegalArgumentException("null is not a valid function to use LazyResult.flatMap");
         }
-        if (this.failures != null) {
-            return LazyResult.failures(this.failures);
+        if (this.failure != null) {
+            return LazyResult.failure(this.failure);
         } else {
             return joinWithLazyResultFunction(lazyResultFunction);
         }
@@ -87,18 +81,18 @@ public class LazyResult<T> {
     }
 
     private <V> LazyResult<V> joinWithFunction(Function<T, V> function) {
-        return new LazyResult<>(() -> this.supplier.get().thenApplyAsync(function), this.failures);
+        return new LazyResult<>(() -> this.supplier.get().thenApplyAsync(function), this.failure);
     }
 
     private <V> LazyResult<V> joinWithLazyResultFunction(Function<T, LazyResult<V>> lazyResultFunction) {
         return new LazyResult<V>(() -> this.supplier.get().thenApplyAsync(lazyResultFunction)
-                .thenApplyAsync(this::extract), this.failures);
+                .thenApplyAsync(this::extract), this.failure);
     }
 
     private <V> V extract(LazyResult<V> lazyResult) {
         Result<V> result = lazyResult.getResult();
-        if (result.hasFailures()) {
-            throw new LazyResultException(result.getFailures());
+        if (result.hasFailure()) {
+            throw new LazyResultException(result.failure().get());
         } else {
             return result.getOrThrow();
         }
@@ -107,8 +101,8 @@ public class LazyResult<T> {
     private Result<T> getResult() {
         synchronized (this) {
             if (this.result == null) {
-                if (this.failures != null) {
-                    this.result = Result.failures(this.failures);
+                if (this.failure != null) {
+                    this.result = Result.failure(this.failure);
                 } else {
                     this.result = start().join();
                 }
@@ -122,7 +116,7 @@ public class LazyResult<T> {
             if (throwable != null) {
                 CompletionException completionException = (CompletionException) throwable;
                 if (throwable.getCause() instanceof LazyResultException) {
-                    return Result.failures(((LazyResultException) throwable.getCause()).getFailures());
+                    return Result.failure(((LazyResultException) throwable.getCause()).getFailure());
                 } else {
                     return Result.failure(new ThrowableFailure(completionException.getCause()));
                 }

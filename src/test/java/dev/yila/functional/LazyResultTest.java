@@ -1,11 +1,8 @@
 package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
-import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -27,8 +24,7 @@ public class LazyResultTest {
     @Test
     void createAFailLazyResult() {
         LazyResult result = LazyResult.failure(failure);
-        assertTrue(result.result().hasFailures());
-        assertEquals(1, result.result().getFailures().size());
+        assertTrue(result.result().hasFailure());
         assertThrows(NoSuchElementException.class, result.result()::getOrThrow);
     }
 
@@ -37,16 +33,9 @@ public class LazyResultTest {
         LazyResult<String> result = LazyResult.create(() -> {
             throw runtimeException;
         });
-        assertTrue(result.result().hasFailures());
-        List<Failure> failures = result.result().getFailures();
-        assertEquals(runtimeException, ((ThrowableFailure) failures.get(0)).getThrowable());
-    }
-
-    @Test
-    void multipleFailures() {
-        List<Failure> failures = Collections.singletonList(failure);
-        LazyResult result = LazyResult.failures(failures);
-        assertTrue(result.map((input) -> false).result().hasFailures());
+        assertTrue(result.result().hasFailure());
+        Failure failure = result.result().failure().get();
+        assertEquals(runtimeException, failure.toThrowable());
     }
 
     @Test
@@ -64,8 +53,8 @@ public class LazyResultTest {
             throw runtimeException;
         });
         assertNotSame(hello, failureLazy);
-        assertTrue(failureLazy.result().hasFailures());
-        assertSame(runtimeException, ((ThrowableFailure) failureLazy.result().getFailures().get(0)).getThrowable());
+        assertTrue(failureLazy.result().hasFailure());
+        assertSame(runtimeException, failureLazy.result().failure().get().toThrowable());
     }
 
     @Test
@@ -87,11 +76,13 @@ public class LazyResultTest {
     }
 
     @Test
-    void flatMapAfterFailureNotExecuted() {
+    void failureAfterMap() {
         LazyResult<String> fail = LazyResult.failure(failure);
         LazyResult<String> afterFail = fail.flatMap(s -> LazyResult.create(() -> s + s));
         assertNotSame(fail, afterFail);
-        assertSame(failure, afterFail.result().getFailures().get(0));
+        assertSame(failure, afterFail.result().failure().get());
+        LazyResult<String> lastFail = afterFail.map(s -> s + s);
+        assertSame(failure, lastFail.result().failure().get());
     }
 
     @Test
@@ -99,7 +90,7 @@ public class LazyResultTest {
         LazyResult<String> hello = LazyResult.create(() -> ("hello"));
         LazyResult<String> failureHello = hello.flatMap(s -> LazyResult.failure(failure));
         assertNotSame(hello, failureHello);
-        assertSame(failure, failureHello.result().getFailures().get(0));
+        assertSame(failure, failureHello.result().failure().get());
     }
 
     @Test
@@ -109,7 +100,7 @@ public class LazyResultTest {
             throw runtimeException;
         }));
         assertNotSame(hello, exceptionHello);
-        assertSame(runtimeException, ((ThrowableFailure) exceptionHello.result().getFailures().get(0)).getThrowable());
+        assertSame(runtimeException, exceptionHello.result().failure().get().toThrowable());
     }
 
     private int add(int number) {
@@ -119,7 +110,7 @@ public class LazyResultTest {
     @Test
     void generateStackOverflowError() {
         LazyResult<Integer> hello = LazyResult.create(() -> add(3));
-        assertTrue(hello.result().getFailuresAsThrowable() instanceof StackOverflowError);
+        assertTrue(hello.result().failure().get().toThrowable() instanceof StackOverflowError);
     }
 
     @Test
