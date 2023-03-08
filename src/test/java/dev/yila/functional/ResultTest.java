@@ -100,10 +100,10 @@ public class ResultTest {
     @Test
     void checkedExceptionLaunched() {
         String exceptionMessage = "fail :(";
-        ThrowingSupplierException supplierException = () -> {
+        ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
-        Result<Integer> result = Result.createChecked(supplierException, RuntimeException.class);
+        Result<Integer> result = Result.createChecked(throwingSupplier, RuntimeException.class);
         assertEquals("ThrowableFailure: java.lang.RuntimeException: fail :(", result.failure().get().toString());
         ThrowableFailure failure = (ThrowableFailure) result.failure().get();
         assertEquals(exceptionMessage, failure.getThrowable().getMessage());
@@ -111,10 +111,10 @@ public class ResultTest {
 
     @Test
     void checkedExceptionInFlatMapOnFail() {
-        ThrowingSupplierException supplierException = () -> {
+        ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException("aaa");
         };
-        Result<Integer> result = Result.createChecked(supplierException, RuntimeException.class)
+        Result<Integer> result = Result.createChecked(throwingSupplier, RuntimeException.class)
                 .flatMap(number -> {
                     throw new RuntimeException("uuu");
                 }, RuntimeException.class);
@@ -123,21 +123,21 @@ public class ResultTest {
 
     @Test
     void checkedExceptionInFlatMap() {
-        ThrowingFunctionException functionException = (input) -> {
+        ThrowingFunction throwingFunction = (input) -> {
             throw new RuntimeException("Fail");
         };
         Result<Integer> result = Result.create(() -> 3)
-                .flatMap(functionException, RuntimeException.class);
+                .flatMap(throwingFunction, RuntimeException.class);
         assertEquals("ThrowableFailure: java.lang.RuntimeException: Fail", result.failure().get().toString());
     }
 
     @Test
     void getFailureAsThrowable() {
         String exceptionMessage = "fail :(";
-        ThrowingSupplierException supplierException = () -> {
+        ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
-        Result<Integer> result = Result.createChecked(supplierException, RuntimeException.class);
+        Result<Integer> result = Result.createChecked(throwingSupplier, RuntimeException.class);
         Throwable throwable = result.failure().get().toThrowable();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
@@ -153,11 +153,11 @@ public class ResultTest {
     @Test
     void unexpectedCheckedExceptions() {
         String exceptionMessage = "fail :(";
-        ThrowingSupplierException supplierException = () -> {
+        ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
         assertThrows(RuntimeException.class, () ->
-                Result.createChecked(supplierException, TestException.class));
+                Result.createChecked(throwingSupplier, TestException.class));
     }
 
     @Test
@@ -187,7 +187,7 @@ public class ResultTest {
 
     @Test
     void flatMapWithCheckedException() {
-        ThrowingFunctionException<Integer, Integer, RuntimeException> function =
+        ThrowingFunction<Integer, Integer, RuntimeException> function =
                 (input) -> input + 2;
         Result<Integer> result = Result.ok(6)
                 .flatMap(function, RuntimeException.class);

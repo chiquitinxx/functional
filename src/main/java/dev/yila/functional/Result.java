@@ -89,7 +89,7 @@ public class Result<T> {
      * @param <K>
      * @return Result<T>
      */
-    public static <T, K extends Throwable> Result<T> createChecked(ThrowingSupplierException<T, K> throwingSupplier, Class<K> throwableClass) {
+    public static <T, K extends Throwable> Result<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
         try {
             return Result.ok(throwingSupplier.get());
         } catch (Throwable throwable) {
@@ -193,7 +193,7 @@ public class Result<T> {
      * @param <R>
      * @param <K>
      */
-    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunctionException<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         if (hasFailure()) {
             return (Result<R>) this;
         } else {
