@@ -3,12 +3,15 @@ package dev.yila.functional.agent;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+/**
+ * Utility class to create and operate Store classes.
+ */
 public class Agent {
 
     private Agent() {}
 
     /**
-     * Store object and returns reference to get it.
+     * Store value and returns reference to it.
      * @param value to store, immutable if possible
      * @return Id
      */
@@ -21,7 +24,7 @@ public class Agent {
     }
 
     /**
-     * Store completable future and returns reference to get the result.
+     * Store completable future and returns reference to result.
      * @param completableFuture
      * @return
      * @param <T>
@@ -35,7 +38,7 @@ public class Agent {
     }
 
     /**
-     * Get immutable object stored for an store.
+     * Get immutable value stored.
      * @param store
      * @return
      * @param <T>
@@ -45,7 +48,7 @@ public class Agent {
     }
 
     /**
-     * Change object saved in the store.
+     * Change value saved in the store.
      * @param store
      * @param function
      * @return

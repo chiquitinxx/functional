@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 /**
- * Class to store 2 sorted values, also known as couple
+ * Class to store 2 sorted values, also known as couple.
  * @param <L> left
  * @param <R> right
  */

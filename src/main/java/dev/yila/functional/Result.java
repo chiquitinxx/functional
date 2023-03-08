@@ -14,7 +14,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * Class to store the result value or the failure
+ * Class to store the result value or the failure.
+ * This class is immutable and returns a new instance after any modifying operation.
  * @param <T> Type of result value
  */
 public class Result<T> {

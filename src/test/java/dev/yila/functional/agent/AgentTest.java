@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -89,5 +90,37 @@ public class AgentTest {
         BigDecimal updated = Agent.get(bigdecimal);
         assertEquals(25, updated.intValue());
         assertNotSame(bigDecimal, updated);
+    }
+
+    @Test
+    void notBlockingCreatingStore() {
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Agent.create(CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(100);
+                atomicInteger.set(1);
+                return "hello";
+            } catch (InterruptedException ie) {
+                throw new RuntimeException(ie);
+            }
+        }));
+
+        assertEquals(0, atomicInteger.get());
+    }
+    @Test
+    void notBlockingUpdatingStore() {
+        Store<String> string = Agent.create("hello");
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+
+        Agent.update(string, (value) -> {
+            try {
+                Thread.sleep(100);
+                atomicInteger.set(1);
+                return value.toUpperCase();
+            } catch (InterruptedException ie) {
+                throw new RuntimeException(ie);
+            }
+        });
+        assertEquals(0, atomicInteger.get());
     }
 }
