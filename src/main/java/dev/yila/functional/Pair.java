@@ -1,11 +1,12 @@
 package dev.yila.functional;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 /**
- * Class to store 2 values
- * @param <L>
- * @param <R>
+ * Class to store 2 sorted values, also known as couple
+ * @param <L> left
+ * @param <R> right
  */
 public class Pair<L, R> {
 
@@ -34,5 +35,17 @@ public class Pair<L, R> {
 
     public <T> T apply(BiFunction<L, R, T> biFunction) {
         return biFunction.apply(this.left, this.right);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Pair &&
+                Objects.equals(this.left, ((Pair<?, ?>) obj).left) &&
+                Objects.equals(this.right, ((Pair<?, ?>) obj).right);
+    }
+
+    @Override
+    public String toString() {
+        return "Pair(" + this.left + ", " + this.right + ")";
     }
 }

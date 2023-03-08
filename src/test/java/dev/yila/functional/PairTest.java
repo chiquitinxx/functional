@@ -2,8 +2,7 @@ package dev.yila.functional;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PairTest {
 
@@ -26,5 +25,26 @@ public class PairTest {
         Pair<String, Integer> pair = new Pair<>("hello", 5);
         Integer result = pair.apply((left, right) -> right * 7);
         assertEquals(35, result);
+    }
+
+    @Test
+    void equalPair() {
+        Pair<String, Integer> hello5 = new Pair<>("hello", 5);
+        Pair<String, Integer> hello6 = new Pair<>("hello", 6);
+        Pair<String, Integer> bye5 = new Pair<>("bye", 5);
+        Pair<String, Integer> sameHello5 = new Pair<>("hello", 5);
+
+        assertNotEquals(hello5, hello6);
+        assertNotEquals(hello5, bye5);
+        assertNotEquals(bye5, hello6);
+
+        assertEquals(hello5, sameHello5);
+    }
+
+    @Test
+    void pairToString() {
+        Pair<String, Integer> hello5 = new Pair<>("hello", 5);
+
+        assertEquals("Pair(hello, 5)", hello5.toString());
     }
 }
