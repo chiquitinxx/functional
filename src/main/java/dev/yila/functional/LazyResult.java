@@ -32,7 +32,6 @@ public class LazyResult<T> {
 
     private final Supplier<CompletableFuture<T>> supplier;
     private final Failure failure;
-    private Result<T> result;
     private CompletableFuture<T> completableFuture;
 
     private LazyResult(Supplier<T> supplier) {
@@ -40,8 +39,8 @@ public class LazyResult<T> {
         this.failure = null;
     }
 
-    private <S> LazyResult(CompletableFuture<T> completableFuture) {
-        this.supplier = () -> completableFuture;
+    private <S> LazyResult(CompletableFuture<T> cf) {
+        this.supplier = () -> cf;
         this.failure = null;
     }
 
@@ -99,16 +98,15 @@ public class LazyResult<T> {
     }
 
     private Result<T> getResult() {
+        Result<T> result;
         synchronized (this) {
-            if (this.result == null) {
-                if (hasFailure()) {
-                    this.result = Result.failure(this.failure);
-                } else {
-                    this.result = start().join();
-                }
+            if (hasFailure()) {
+                result = Result.failure(this.failure);
+            } else {
+                result = start().join();
             }
         }
-        return this.result;
+        return result;
     }
 
     private static <U> CompletableFuture<Result<U>> toCompletableResult(CompletableFuture<U> completableFuture) {
