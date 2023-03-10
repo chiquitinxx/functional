@@ -1,7 +1,5 @@
 package dev.yila.functional.failure;
 
-import java.util.List;
-
 public class LazyResultException extends RuntimeException {
 
     private final Failure failure;

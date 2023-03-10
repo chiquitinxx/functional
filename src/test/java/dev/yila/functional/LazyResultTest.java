@@ -88,7 +88,8 @@ public class LazyResultTest {
     @Test
     void failureInFlatMapFunction() {
         LazyResult<String> hello = LazyResult.create(() -> ("hello"));
-        LazyResult<String> failureHello = hello.flatMap(s -> LazyResult.failure(failure));
+        LazyResult<String> failureHello = hello
+                .flatMap(s -> LazyResult.failure(failure));
         assertNotSame(hello, failureHello);
         assertSame(failure, failureHello.result().failure().get());
     }
@@ -133,6 +134,11 @@ public class LazyResultTest {
     }
 
     @Test
+    void canNotUseNullAsFailure() {
+        assertThrows(IllegalArgumentException.class, () -> LazyResult.failure(null));
+    }
+
+    @Test
     void canStartTheExecution() throws ExecutionException, InterruptedException {
         AtomicInteger atomicInteger = new AtomicInteger(0);
         LazyResult<Integer> hello = LazyResult
@@ -152,14 +158,12 @@ public class LazyResultTest {
     }
 
     @Test
-    void startAndGetResultAtSameTime() throws ExecutionException, InterruptedException {
+    void startAtSameTime() {
         LazyResult<Integer> hello = LazyResult
                 .create(() -> ("hello"))
                 .map(String::length);
         CompletableFuture<Result<Integer>> cf = hello.start();
         CompletableFuture<Result<Integer>> cf2 = hello.start();
-        Result<Integer> result = hello.result();
-        assertSame(result, cf.get());
-        assertSame(result, cf2.get());
+        assertEquals(cf.join().getOrThrow(), cf2.join().getOrThrow());
     }
 }
