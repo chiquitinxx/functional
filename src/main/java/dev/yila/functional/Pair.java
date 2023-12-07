@@ -45,6 +45,11 @@ public class Pair<L, R> {
     }
 
     @Override
+    public int hashCode() {
+        return this.left.hashCode() + this.right.hashCode();
+    }
+
+    @Override
     public String toString() {
         return "Pair(" + this.left + ", " + this.right + ")";
     }

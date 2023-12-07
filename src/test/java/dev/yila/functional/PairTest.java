@@ -42,6 +42,13 @@ public class PairTest {
     }
 
     @Test
+    void hashcode() {
+        Pair<String, Integer> pair = new Pair<>("hello", 5);
+
+        assertEquals(pair.hashCode(), "hello".hashCode() + Integer.valueOf(5).hashCode());
+    }
+
+    @Test
     void pairToString() {
         Pair<String, Integer> hello5 = new Pair<>("hello", 5);
 
