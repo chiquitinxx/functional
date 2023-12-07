@@ -100,7 +100,8 @@ public class MatcherTest {
 
     @Test
     void matcherFromInitialFunctions() {
-        Matcher matcher = Matcher.from((Integer number) -> number < 2, number -> "small")
+        Matcher<Integer, String> matcher = Matcher
+                .from((Integer number) -> number < 2, number -> "small")
                 .orElse(number -> "big");
         assertEquals("big", matcher.result(2).getOrThrow());
         assertEquals("small", matcher.result(1).getOrThrow());

@@ -39,12 +39,12 @@ public class ResultTest {
 
     @Test
     void resultWithMultipleFailures() {
-        List<Failure> failures = new ArrayList();
+        List<Failure> failures = new ArrayList<>();
         failures.add(new SomeFailure());
         failures.add(Failure.create(CODE, DESCRIPTION));
         Result result = Result.failures(failures);
         Failure multipleFailure = (Failure) result.failure().get();
-        assertTrue(multipleFailure instanceof MultipleFailures);
+        assertInstanceOf(MultipleFailures.class, multipleFailure);
         assertEquals("[Some failure, someCode: some description]", multipleFailure.toString());
     }
 
@@ -177,7 +177,7 @@ public class ResultTest {
 
     @Test
     void toOptional() {
-        Result good = Result.ok("good");
+        Result<String> good = Result.ok("good");
         Result failure = Result.failure(Failure.create("failure", "result"));
 
         assertEquals("good", good.value().get());
