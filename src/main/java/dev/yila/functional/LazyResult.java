@@ -2,10 +2,12 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.LazyResultException;
-import dev.yila.functional.failure.ThrowableFailure;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -14,112 +16,115 @@ import java.util.function.Supplier;
  * The result is lazy, and only begins computing after result() or start() is called.
  * @param <T>
  */
-public class LazyResult<T> {
+public class LazyResult<T, F extends Failure> implements Result<T, F> {
 
-    public static <V> LazyResult<V> create(Supplier<V> supplier) {
+    public static <V, F extends Failure> LazyResult<V, F> create(Supplier<V> supplier) {
         if (supplier == null) {
             throw new IllegalArgumentException("null is not a valid supplier to create LazyResult");
         }
         return new LazyResult<>(supplier);
     }
 
-    public static <V> LazyResult<V> failure(Failure failure) {
-        if (failure == null) {
-            throw new IllegalArgumentException("null is not a valid failure to create LazyResult");
-        }
-        return new LazyResult<>(failure);
-    }
-
-    private final Supplier<CompletableFuture<T>> supplier;
-    private final Failure failure;
-    private CompletableFuture<T> completableFuture;
+    private final Supplier<T> supplier;
+    private CompletableFuture<DirectResult<T, F>> completableFuture;
 
     private LazyResult(Supplier<T> supplier) {
-        this.supplier = () -> CompletableFuture.supplyAsync(supplier);
-        this.failure = null;
+        this.supplier = supplier;
     }
 
-    private <S> LazyResult(CompletableFuture<T> cf) {
-        this.supplier = () -> cf;
-        this.failure = null;
-    }
-
-    private LazyResult(Failure failure) {
-        this.failure = failure;
-        this.supplier = null;
-    }
-
-    public Result<T> result() {
-        return getResult();
-    }
-
-    public <V> LazyResult<V> map(Function<T, V> function) {
+    @Override
+    public <V> Result<V, F> map(Function<T, V> function) {
         if (function == null) {
             throw new IllegalArgumentException("null is not a valid function to use LazyResult.map");
         }
-        if (hasFailure()) {
-            return LazyResult.failure(this.failure);
-        } else {
-            return new LazyResult<>(this.execute().thenApplyAsync(function));
-        }
+        return new LazyResult<>(() -> function.apply(this.supplier.get()));
     }
 
-    public <V> LazyResult<V> flatMap(Function<T, LazyResult<V>> lazyResultFunction) {
-        if (lazyResultFunction == null) {
-            throw new IllegalArgumentException("null is not a valid function to use LazyResult.flatMap");
-        }
-        if (hasFailure()) {
-            return LazyResult.failure(this.failure);
-        } else {
-            return new LazyResult<>(this.execute()
-                    .thenComposeAsync(d -> lazyResultFunction.apply(d).execute()));
-        }
+    @Override
+    public Result<T, F> onSuccess(Consumer<T> consumer) {
+        return getResult().onSuccess(consumer);
     }
 
-    public synchronized CompletableFuture<Result<T>> start() {
-        return toCompletableResult(execute());
+    @Override
+    public Result<T, F> onFailure(Consumer<Result<T, F>> consumer) {
+        return getResult().onFailure(consumer);
     }
 
-    private synchronized CompletableFuture<T> execute() {
-        if (hasFailure()) {
-            return CompletableFuture.supplyAsync(() -> {
-                throw new LazyResultException(this.failure);
-            });
-        } else {
-            if (completableFuture == null) {
-                completableFuture = this.supplier.get();
+    @Override
+    public Optional<T> value() {
+        return getResult().value();
+    }
+
+    @Override
+    public <V> Result<V, F> flatMap(Function<T, Result<V, F>> function) {
+        Objects.requireNonNull(function);
+        return new LazyResult<>(() -> {
+            Result<V, F> value = function.apply(this.supplier.get());
+            if (value.hasFailure()) {
+                throw new LazyResultException(value.failure().get());
             }
-            return completableFuture;
-        }
+            return value.getOrThrow();
+        });
     }
 
-    private boolean hasFailure() {
-        return this.failure != null;
-    }
-
-    private Result<T> getResult() {
-        Result<T> result;
-        synchronized (this) {
-            if (hasFailure()) {
-                result = Result.failure(this.failure);
-            } else {
-                result = start().join();
+    @Override
+    public <R, K extends Throwable> Result<R, F> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+        Objects.requireNonNull(function);
+        Objects.requireNonNull(throwableClass);
+        return flatMap((input) -> {
+            try {
+                return DirectResult.ok(function.apply(input));
+            } catch (Throwable throwable) {
+                if (throwableClass.isAssignableFrom(throwable.getClass())) {
+                    return DirectResult.failure(throwable);
+                } else {
+                    throw new RuntimeException(throwable);
+                }
             }
-        }
-        return result;
+        });
     }
 
-    private static <U> CompletableFuture<Result<U>> toCompletableResult(CompletableFuture<U> completableFuture) {
-        return completableFuture.handleAsync((result, throwable) -> {
+    @Override
+    public boolean hasFailure() {
+        return getResult().hasFailure();
+    }
+
+    @Override
+    public T getOrThrow() {
+        return getResult().getOrThrow();
+    }
+
+    @Override
+    public T orElse(Function<Result<T, F>, T> function) {
+        return getResult().orElse(function);
+    }
+
+    @Override
+    public Optional<F> failure() {
+        return getResult().failure();
+    }
+
+    private synchronized CompletableFuture<DirectResult<T, F>> execute() {
+        if (completableFuture == null) {
+            completableFuture = toCompletableResult(this.supplier);
+        }
+        return completableFuture;
+    }
+
+    private Result<T, F> getResult() {
+        return execute().join();
+    }
+
+    private static <T, F extends Failure> CompletableFuture<DirectResult<T, F>> toCompletableResult(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier).handleAsync((result, throwable) -> {
             if (throwable != null) {
                 CompletionException completionException = (CompletionException) throwable;
                 if (throwable.getCause() instanceof LazyResultException) {
-                    return Result.failure(((LazyResultException) throwable.getCause()).getFailure());
-                } else {
-                    return Result.failure(new ThrowableFailure(completionException.getCause()));
+                    return DirectResult.failure(((LazyResultException) throwable.getCause()).getFailure());
                 }
+                return DirectResult.failure(Failure.create(completionException.getCause()));
             }
-            return Result.ok(result);
+            return DirectResult.ok(result);
         });
     }
 }

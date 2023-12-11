@@ -24,7 +24,7 @@ public class MultipleFailures implements Failure {
     @Override
     public Throwable toThrowable() {
         return this.failures.stream().skip(1)
-                .map(failure -> failure.toThrowable())
+                .map(Failure::toThrowable)
                 .reduce(this.failures.get(0).toThrowable(), (all, current) -> {
                     all.addSuppressed(current);
                     return all;

@@ -1,5 +1,6 @@
 package dev.yila.functional;
 
+import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.MatcherNotFoundFailure;
 
 import java.util.Collections;
@@ -28,7 +29,7 @@ public class Matcher<I, O> {
     }
 
     private final List<Pair<Function<I, Boolean>, Function<I, O>>> matchers;
-    private Function<I, Result<O>> defaultCase = (input) -> Result.failure(new MatcherNotFoundFailure(input));
+    private Function<I, DirectResult<O, ? extends Failure>> defaultCase = (input) -> DirectResult.failure(new MatcherNotFoundFailure(input));
 
     private Matcher(Class<I> inputClass, Class<O> outputClass) {
         this.matchers = Collections.EMPTY_LIST;
@@ -50,13 +51,13 @@ public class Matcher<I, O> {
         return new Matcher<>(this.matchers, Pair.of(input -> true, function));
     }
 
-    public Result<O> result(I input) {
+    public DirectResult<O, ? extends Failure> resultFor(I input) {
         if (input == null) {
             throw new IllegalArgumentException("null is not allowed for as input");
         }
         return getMatchingFunction(input)
-                .map(fun -> Result.ok(fun.apply(input)))
-                .orElseGet(() -> defaultCase.apply(input));
+                .map(fun -> DirectResult.ok(fun.apply(input)))
+                .orElseGet(() -> (DirectResult<O, Failure>) defaultCase.apply(input));
     }
 
     private Optional<Function<I, O>> getMatchingFunction(I input) {

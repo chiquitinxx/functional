@@ -1,7 +1,6 @@
 package dev.yila.functional.failure;
 
 public class LazyResultException extends RuntimeException {
-
     private final Failure failure;
 
     public LazyResultException(Failure failure) {
@@ -9,6 +8,6 @@ public class LazyResultException extends RuntimeException {
     }
 
     public Failure getFailure() {
-        return failure;
+        return this.failure;
     }
 }

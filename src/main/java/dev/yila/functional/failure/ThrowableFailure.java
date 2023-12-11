@@ -9,7 +9,7 @@ public class ThrowableFailure implements Failure {
     }
 
     public Throwable getThrowable() {
-        return throwable;
+        return this.throwable;
     }
 
     @Override

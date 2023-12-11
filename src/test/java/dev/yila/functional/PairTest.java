@@ -34,6 +34,7 @@ public class PairTest {
         Pair<String, Integer> bye5 = new Pair<>("bye", 5);
         Pair<String, Integer> sameHello5 = new Pair<>("hello", 5);
 
+        assertNotEquals(hello5, "patata");
         assertNotEquals(hello5, hello6);
         assertNotEquals(hello5, bye5);
         assertNotEquals(bye5, hello6);

@@ -13,7 +13,7 @@ public class MultipleFailuresTest {
     @Test
     public void multiple() {
         List<Failure> list = new ArrayList<>();
-        list.add(Failure.create("code", "description"));
+        list.add(CodeDescriptionFailure.create("code", "description"));
         Throwable throwable = new RuntimeException();
         list.add(new ThrowableFailure(throwable));
 
@@ -21,13 +21,12 @@ public class MultipleFailuresTest {
         assertSame(throwable, failures.getFailures().get(1).toThrowable());
         assertEquals("code: description", failures.getFailures()
                 .get(0).toThrowable().getMessage());
-        assertEquals("dev.yila.functional.failure.MultipleFailures", failures.getCode());
     }
 
     @Test
     public void multipleToThrowable() {
         List<Failure> list = new ArrayList<>();
-        list.add(Failure.create("code", "description"));
+        list.add(CodeDescriptionFailure.create("code", "description"));
         list.add(new ThrowableFailure(new RuntimeException("Fail :(")));
 
         MultipleFailures failures = new MultipleFailures(list);
