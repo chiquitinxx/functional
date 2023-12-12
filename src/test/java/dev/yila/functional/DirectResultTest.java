@@ -29,14 +29,6 @@ public class DirectResultTest extends ResultTest {
     }
 
     @Test
-    void createResults() {
-        Result<Integer, Failure> result = DirectResult.create(() -> 7);
-        assertEquals(7, result.getOrThrow());
-        result = DirectResult.flatCreate(() -> DirectResult.ok(6));
-        assertEquals(6, result.getOrThrow());
-    }
-
-    @Test
     void checkedExceptionNotThrown() {
         Result<Integer, Failure> result = DirectResult.createChecked(() -> 5, RuntimeException.class);
         assertEquals(5, result.getOrThrow());

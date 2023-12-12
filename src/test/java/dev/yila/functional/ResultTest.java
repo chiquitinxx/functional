@@ -2,10 +2,8 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.CodeDescriptionFailure;
 import dev.yila.functional.failure.Failure;
-import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,11 +34,12 @@ public abstract class ResultTest {
     }
 
     @Test
-    void chainResults() {
+    void chainNumberResults() {
         Result<Integer, Failure> result = number(5);
         Result<Integer, Failure> multiplyBy3 = result.map(number -> number * 3);
         assertEquals(15, multiplyBy3.getOrThrow());
-        assertEquals(25, result.flatMap(number -> DirectResult.ok(number * 5)).getOrThrow());
+        assertEquals(25, result.flatMap(number -> number(number * 5)).getOrThrow());
+        assertEquals(30, multiplyBy3.flatMap(number -> number(number * 2)).getOrThrow());
     }
 
     @Test

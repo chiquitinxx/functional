@@ -9,10 +9,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
- * Class to store the result value or the failure.
+ * Class to store the direct result value or the failure.
  * This class is immutable and returns a new instance after any modifying operation.
  * @param <T> Type of result value
  */
@@ -56,26 +55,6 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
             throw new IllegalArgumentException("Failures list can not be null.");
         }
         return (DirectResult<T, F>) new DirectResult<>(null, new MultipleFailures(failures));
-    }
-
-    /**
-     * Create a Result from a supplier.
-     * @param supplier
-     * @param <T>
-     * @return Result<T>
-     */
-    public static <T, F extends Failure> DirectResult<T, F> create(Supplier<T> supplier) {
-        return DirectResult.ok(supplier.get());
-    }
-
-    /**
-     * Create a Result from a Supplier that return a Result
-     * @param supplier
-     * @param <T>
-     * @return Result<T>
-     */
-    public static <T, F extends Failure> DirectResult<T, F> flatCreate(Supplier<DirectResult<T, F>> supplier) {
-        return supplier.get();
     }
 
     /**

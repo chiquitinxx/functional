@@ -80,6 +80,23 @@ public class LazyResultTest extends ResultTest {
     }
 
     @Test
+    void nothingHappensUntilValueIsRequested() {
+        AtomicInteger counter = new AtomicInteger(0);
+        Result<Integer, Failure> start = number(4);
+        Result<Integer, Failure> after = start.map(num -> {
+            counter.incrementAndGet();
+            return num * 2;
+        });
+        Result<Integer, Failure> last = after.flatMap(num -> {
+            counter.incrementAndGet();
+            return after.map(n -> n * num);
+        });
+        assertEquals(0, counter.get());
+        assertEquals(64, last.getOrThrow());
+        assertEquals(3, counter.get());
+    }
+
+    @Test
     void failureAfterMap() {
         Result<String, Failure> fail = DirectResult.failure(failure);
         Result<String, Failure> afterFail = fail.flatMap(s -> LazyResult.create(() -> s + s));
