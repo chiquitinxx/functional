@@ -6,9 +6,7 @@ import dev.yila.functional.failure.MultipleFailures;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -99,6 +97,61 @@ public class DirectResultTest extends ResultTest {
         assertThrows(IllegalArgumentException.class, () -> failure((Failure) null));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failures(null));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failures(Collections.emptyList()));
+    }
+
+    @Test
+    void successValidation() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("number", 6);
+
+        Result<Map<String, Object>, Failure> result = DirectResult.validate(map,
+                CodeDescriptionFailure.create("map", "missing number"),
+                m -> m.containsKey("number"));
+
+        assertSame(map, result.getOrThrow());
+    }
+
+    @Test
+    void failureValidation() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("number", 6);
+
+        Result<Map<String, Object>, Failure> result = DirectResult.validate(map,
+                CodeDescriptionFailure.create("map", "missing random"),
+                m -> m.containsKey("random"));
+
+        assertEquals("map: missing random", result.failure().get().toString());
+    }
+
+    @Test
+    void invalidValidations() {
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
+                null, Failure.create(new Throwable()), b -> true));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
+                "value", null, b -> true));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
+                "value", Failure.create(new Throwable()), null));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(null));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
+                "value", null));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate("value"));
+    }
+
+    @Test
+    void successMultipleValidation() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("number", 6);
+
+        Result<Map<String, Object>, Failure> result = DirectResult.validate(map,
+                Pair.of(
+                        CodeDescriptionFailure.create("map", "missing number"),
+                        m -> m.containsKey("number")
+                ), Pair.of(
+                        CodeDescriptionFailure.create("map", "wrong number"),
+                        m -> (Integer) m.get("number") == 6
+                ));
+
+        assertSame(map, result.getOrThrow());
     }
 
     static class TestException extends Exception {}
