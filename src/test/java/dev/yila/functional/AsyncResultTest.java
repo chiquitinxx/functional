@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AsyncResultTest extends ResultTest {
 
     private final RuntimeException runtimeException = new RuntimeException("exception");
-    
+
     @Test
     void createAsyncResultFromFuture() {
         AsyncResult<Integer, ?> result = AsyncResult.create(CompletableFuture.completedFuture(5));
