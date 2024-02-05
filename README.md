@@ -4,11 +4,15 @@
 
 Library with classes to improve your functional style programming experience. It offers the following classes:
 
-Pair<L,R> -> a class containing a pair of values
+Pair<L,R> -> a class containing a pair of values.
 
-Result<T> -> A mix between "Optional" and "Either".
+Result<T, F extends Failure> -> Interface mix between "Optional" and "Either".
 
-LazyResult<T> -> Lazy and asynchronous version of Result.
+DirectResult<T, F> -> Implementation of Result.
+
+AsyncResult<T, F> -> Asynchronous version of Result.
+
+LazyResult<T, F> -> Lazy version of Result.
 
 Matcher<I, O> -> Little pattern matcher evaluator for values.
 
