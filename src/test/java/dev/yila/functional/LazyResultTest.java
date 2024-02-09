@@ -5,8 +5,10 @@ import dev.yila.functional.failure.CodeDescriptionFailure;
 import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.ExecutionException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -139,6 +141,24 @@ public class LazyResultTest extends ResultTest {
         Result<String, Failure> hello = LazyResult.create(() -> ("hello"));
         Result<String, Failure> exceptionHello = hello.flatMap(String::toUpperCase, NullPointerException.class);
         assertEquals("HELLO", exceptionHello.getOrThrow());
+    }
+
+    @Test
+    void time() {
+        Supplier<String> supplier = () -> {
+            try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+            return "hello";
+        };
+        LocalDateTime before = LocalDateTime.now();
+        Result<String, Failure> first = LazyResult.create(supplier);
+        Result<String, Failure> second = LazyResult.create(supplier);
+        Result<String, Failure> third = LazyResult.create(supplier);
+
+        Result<String, Failure> join = Result.join((list) -> list.stream()
+                .reduce("", String::concat), first, second, third);
+
+        assertEquals("hellohellohello", join.getOrThrow());
+        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 150);
     }
 
     private int add(int number) {

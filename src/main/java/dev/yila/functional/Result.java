@@ -93,6 +93,7 @@ public interface Result<T, F extends Failure> {
     static <T, F extends Failure> DirectResult<T, F> join(Function<List<T>, T> joinOks,
                                                           Result<T, F>... results) {
         List<Failure> failures = Arrays.stream(results)
+                .parallel()
                 .filter(Result::hasFailure)
                 .map(result -> result.failure().get())
                 .collect(Collectors.toList());
