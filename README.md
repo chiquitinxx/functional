@@ -6,6 +6,8 @@ Library with classes to improve your functional style programming experience. It
 
 Pair<L,R> -> a class containing a pair of values.
 
+Trio<F,S,T> -> a class containing a trio of values.
+
 Result<T, F extends Failure> -> Interface mix between "Optional" and "Either".
 
 DirectResult<T, F> -> Implementation of Result.
