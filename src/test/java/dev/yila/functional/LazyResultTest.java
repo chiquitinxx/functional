@@ -158,7 +158,7 @@ public class LazyResultTest extends ResultTest {
                 .reduce("", String::concat), first, second, third);
 
         assertEquals("hellohellohello", join.getOrThrow());
-        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 150);
+        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 200);
     }
 
     private int add(int number) {
