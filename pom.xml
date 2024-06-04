@@ -58,7 +58,7 @@
     <maven.gpg.plugin>3.0.1</maven.gpg.plugin>
     <maven.release.plugin>2.5.3</maven.release.plugin>
     <maven.jacoco.plugin>0.8.8</maven.jacoco.plugin>
-    <maven.coveralls.plugin>4.3.0</maven.coveralls.plugin>
+    <maven.coveralls.plugin>4.5.0-M3</maven.coveralls.plugin>
   </properties>
 
   <dependencies>
@@ -154,7 +154,7 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.eluder.coveralls</groupId>
+        <groupId>com.github.hazendaz.maven</groupId>
         <artifactId>coveralls-maven-plugin</artifactId>
         <version>${maven.coveralls.plugin}</version>
         <configuration>
