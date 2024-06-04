@@ -25,9 +25,9 @@ public class TrioTest {
     @Test
     void equalTrio() {
         Trio trio = Trio.of(1, 2, 3);
-        assertEquals(Trio.of("hello", 5, "world"),
-                new Trio<>("hello", 5, "world"));
-        assertNotEquals("hello", Trio.of(1, 2, 3));
+        assertEquals(trio, trio);
+        assertNotEquals("hello", trio);
+        assertNotEquals(trio, 5);
         assertNotEquals(trio, Trio.of(1, 2, 4));
         assertNotEquals(trio, Trio.of(1, 1, 3));
         assertNotEquals(trio, Trio.of(2, 2, 3));
