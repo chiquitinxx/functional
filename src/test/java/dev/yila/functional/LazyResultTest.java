@@ -146,7 +146,9 @@ public class LazyResultTest extends ResultTest {
     @Test
     void time() {
         Supplier<String> supplier = () -> {
+            System.out.println("Start");
             try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+            System.out.println("End.");
             return "hello";
         };
         LocalDateTime before = LocalDateTime.now();
