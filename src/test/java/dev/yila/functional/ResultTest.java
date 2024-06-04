@@ -1,6 +1,7 @@
 package dev.yila.functional;
 
 import dev.yila.functional.failure.CodeDescriptionFailure;
+import dev.yila.functional.failure.DescriptionFailure;
 import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
@@ -24,13 +25,19 @@ public abstract class ResultTest {
     }
 
     @Test
-    void failureResult() {
+    void codeDescriptionFailureResult() {
         Result<Integer, Failure> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
         assertTrue(result.hasFailure());
         result.onSuccess(number -> fail("never executed"));
         result.onFailure(r -> assertEquals(result.failure().get(), r.failure().get()));
         assertEquals(0, result.orElse(r -> 0));
         assertThrows(NoSuchElementException.class, result::getOrThrow);
+    }
+
+    @Test
+    void descriptionFailureResult() {
+        Result<Integer, Failure> result = failure(DescriptionFailure.create(DESCRIPTION));
+        assertEquals(DESCRIPTION, result.failure().get().toString());
     }
 
     @Test
