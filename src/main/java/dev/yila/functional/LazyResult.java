@@ -14,10 +14,18 @@ import java.util.function.Supplier;
 /**
  * LazyResult executes suppliers and consecutive functions asynchronously.
  * The result is lazy, and only begins computing after result() or start() is called.
- * @param <T>
+ * @param <T> success result type
+ * @param <F> failure type
  */
 public class LazyResult<T, F extends Failure> implements Result<T, F> {
 
+    /**
+     * Create a lazy result from a supplier.
+     * @param supplier
+     * @return
+     * @param <V>
+     * @param <F>
+     */
     public static <V, F extends Failure> LazyResult<V, F> create(Supplier<V> supplier) {
         if (supplier == null) {
             throw new IllegalArgumentException("null is not a valid supplier to create LazyResult");

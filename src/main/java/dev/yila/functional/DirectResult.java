@@ -11,15 +11,17 @@ import java.util.stream.Collectors;
 /**
  * Class to store the direct result value or the failure.
  * This class is immutable and returns a new instance after any modifying operation.
- * @param <T> Type of result value
+ * @param <T> Type of the value
+ * @param <F> Type of the failure
  */
 public class DirectResult<T, F extends Failure> implements Result<T, F> {
 
     /**
      * Create a new success result.
      * @param value
-     * @param <T>
-     * @return Result<T, F>
+     * @return
+     * @param <T> Type of the value
+     * @param <F> Type of the failure
      */
     public static <T, F extends Failure> DirectResult<T, F> ok(T value) {
         if (value == null) {
@@ -28,6 +30,13 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
         return new DirectResult<>(value, null);
     }
 
+    /**
+     * Create a new failure result.
+     * @param failure
+     * @return
+     * @param <T>
+     * @param <F>
+     */
     public static <T, F extends Failure> DirectResult<T, F> failure(Failure failure) {
         if (failure == null) {
             throw new IllegalArgumentException("Failure can not be null.");
@@ -35,6 +44,13 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
         return (DirectResult<T, F>) new DirectResult<>(null, failure);
     }
 
+    /**
+     * Create a new failure result from a throwable.
+     * @param throwable
+     * @return
+     * @param <T>
+     * @param <F>
+     */
     public static <T, F extends Failure> DirectResult<T, F> failure(Throwable throwable) {
         if (throwable == null) {
             throw new IllegalArgumentException("Fail can not be null.");
@@ -45,8 +61,9 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     /**
      * Create a new failure result.
      * @param failures
+     * @return
      * @param <T>
-     * @return Result<T>
+     * @param <F>
      */
     public static <T, F extends Failure> DirectResult<T, F> failures(List<Failure> failures) {
         if (failures == null || failures.isEmpty()) {
@@ -59,9 +76,10 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
      * Create a Result from a supplier with a checked exception
      * @param throwingSupplier
      * @param throwableClass
+     * @return
      * @param <T>
      * @param <K>
-     * @return Result<T>
+     * @param <F>
      */
     public static <T, K extends Throwable, F extends Failure> DirectResult<T, F> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
         try {
@@ -75,6 +93,15 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
         }
     }
 
+    /**
+     *
+     * @param value
+     * @param failure
+     * @param function
+     * @return
+     * @param <T>
+     * @param <F>
+     */
     public static <T, F extends Failure> Result<T, F> validate(T value, F failure, Function<T, Boolean> function) {
         if (failure == null) {
             throw new IllegalArgumentException("Failure can not be null.");
@@ -91,6 +118,14 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
         return DirectResult.failure(failure);
     }
 
+    /**
+     *
+     * @param value
+     * @param validations
+     * @return
+     * @param <T>
+     * @param <F>
+     */
     public static <T, F extends Failure> Result<T, F> validate(T value, Pair<F, Function<T, Boolean>>... validations) {
         if (value == null) {
             throw new IllegalArgumentException("Value can not be null.");

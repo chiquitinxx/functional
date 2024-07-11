@@ -46,16 +46,16 @@ public interface Result<T, F extends Failure> {
     /**
      * New result with the execution of the function if is success
      * @param function
+     * @return
      * @param <R>
-     * @return Result<R>
      */
     <R> Result<R, F> map(Function<T, R> function);
 
     /**
      * Flatten map current result with a function that returns a new result.
      * @param function will be executed if current result is success.
+     * @return
      * @param <R>
-     * @return Result<R>
      */
     <R> Result<R, F> flatMap(Function<T, Result<R, F>> function);
 
@@ -63,7 +63,7 @@ public interface Result<T, F extends Failure> {
      * Flatten map current result with a throwing function that returns a new result.
      * @param function
      * @param throwableClass
-     * @return Result<R>
+     * @return
      * @param <R>
      * @param <K>
      */
@@ -72,23 +72,30 @@ public interface Result<T, F extends Failure> {
     /**
      * Execute the consumer if the result is success
      * @param consumer
-     * @return Result<T>
+     * @return
      */
     Result<T, F> onSuccess(Consumer<T> consumer);
 
     /**
      * Execute the consumer if the result has failures
      * @param consumer
-     * @return Result<T>
+     * @return
      */
     Result<T, F> onFailure(Consumer<Result<T, F>> consumer);
 
+    /**
+     * Get the value if result is success.
+     * @return
+     */
     Optional<T> value();
 
     /**
-     * Join multiple Results in one Result
+     * Join multiple Results in one Result.
+     * @param joinOks
      * @param results
-     * @return Result<List>
+     * @return
+     * @param <T>
+     * @param <F>
      */
     static <T, F extends Failure> DirectResult<T, F> join(Function<List<T>, T> joinOks,
                                                           Result<T, F>... results) {

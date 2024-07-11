@@ -14,6 +14,16 @@ public class Trio<F, S, T> {
     private final S second;
     private final T third;
 
+    /**
+     * Create a trio.
+     * @param first value
+     * @param second value
+     * @param third value
+     * @return
+     * @param <First> type
+     * @param <Second> type
+     * @param <Third> type
+     */
     public static <First, Second, Third> Trio<First, Second, Third> of(First first, Second second, Third third) {
         return new Trio<>(first, second, third);
     }
