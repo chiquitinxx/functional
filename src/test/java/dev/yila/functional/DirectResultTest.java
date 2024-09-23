@@ -174,6 +174,11 @@ public class DirectResultTest extends ResultTest {
     }
 
     @Override
+    Result<Optional<String>, Failure> optional(Optional<String> optional) {
+        return DirectResult.ok(optional);
+    }
+
+    @Override
     Result<Integer, Failure> failure(Failure failure) {
         return DirectResult.failure(failure);
     }

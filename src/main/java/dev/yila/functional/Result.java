@@ -5,6 +5,7 @@ import dev.yila.functional.failure.MultipleFailures;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -111,6 +112,22 @@ public interface Result<T, F extends Failure> {
             return DirectResult.ok(res);
         } else {
             return DirectResult.failure(new MultipleFailures(failures));
+        }
+    }
+
+    /**
+     * Unwarp optional
+     * @param result
+     * @return
+     * @param <U>
+     * @param <F>
+     */
+    static <U, F extends Failure> Result<U, F> removeOptional(Result<Optional<U>, F> result) {
+        if (result.hasFailure()) {
+            return (Result<U, F>) result;
+        } else {
+            Optional<U> value = result.getOrThrow();
+            return DirectResult.createChecked(value::get, NoSuchElementException.class);
         }
     }
 }

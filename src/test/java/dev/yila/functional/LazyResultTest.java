@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -227,6 +228,11 @@ public class LazyResultTest extends ResultTest {
     @Override
     Result<String, Failure> string(String string) {
         return LazyResult.create(() -> string);
+    }
+
+    @Override
+    Result<Optional<String>, Failure> optional(Optional<String> optional) {
+        return LazyResult.create(() -> optional);
     }
 
     @Override

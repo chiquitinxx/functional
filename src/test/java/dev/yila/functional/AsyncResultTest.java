@@ -3,14 +3,10 @@ package dev.yila.functional;
 import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -61,6 +57,11 @@ public class AsyncResultTest extends ResultTest {
     @Override
     Result<String, Failure> string(String string) {
         return AsyncResult.create(CompletableFuture.completedFuture(string));
+    }
+
+    @Override
+    Result<Optional<String>, Failure> optional(Optional<String> optional) {
+        return AsyncResult.create(CompletableFuture.completedFuture(optional));
     }
 
     @Override

@@ -6,7 +6,9 @@ import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
+import static dev.yila.functional.Result.removeOptional;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class ResultTest {
@@ -101,7 +103,7 @@ public abstract class ResultTest {
     @Test
     void throwableFailure() {
         String exceptionMessage = "fail :(";
-        Result<Integer, Failure> result = failure(new RuntimeException(exceptionMessage));
+        Result<?, Failure> result = failure(new RuntimeException(exceptionMessage));
         Throwable throwable = result.failure().get().toThrowable();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
@@ -122,10 +124,37 @@ public abstract class ResultTest {
         assertEquals("failure: result", failure.failure().get().toString());
     }
 
+    @Test
+    void removeOptionalFromFailure() {
+        Result failure = failure(new SimpleFailure());
+        Result<String, Failure> result = removeOptional(failure);
+
+        assertTrue(result.hasFailure());
+        assertTrue(result.failure().get() instanceof SimpleFailure);
+    }
+
+    @Test
+    void removeEmptyOptional() {
+        Result<Optional<String>, Failure> empty = optional(Optional.empty());
+        Result<String, Failure> result = removeOptional(empty);
+
+        assertTrue(result.hasFailure());
+        assertTrue(result.failure().get().toThrowable() instanceof NoSuchElementException);
+    }
+
+    @Test
+    void removePresentOptional() {
+        Result<Optional<String>, Failure> present = optional(Optional.of("hello"));
+        Result<String, Failure> result = removeOptional(present);
+
+        assertEquals("hello", result.getOrThrow());
+    }
+
     static class SimpleFailure implements Failure {}
 
     abstract Result<Integer, Failure> number(Integer integer);
     abstract Result<String, Failure> string(String string);
+    abstract Result<Optional<String>, Failure> optional(Optional<String> optional);
     abstract Result<Integer, Failure> failure(Failure failure);
     abstract Result<Integer, Failure> failure(Throwable throwable);
 }
