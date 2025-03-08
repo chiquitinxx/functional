@@ -9,6 +9,12 @@ import java.util.Objects;
  */
 public class ImmutableList<T> {
 
+    /**
+     *
+     * @param elements
+     * @return
+     * @param <T>
+     */
     @SafeVarargs
     public static <T> ImmutableList<T> create(T... elements) {
         int size = elements.length;
@@ -64,10 +70,18 @@ public class ImmutableList<T> {
         this.node = node;
     }
 
+    /**
+     * Get head of the list.
+     * @return
+     */
     public T head() {
         return node.current();
     }
 
+    /**
+     * Tail of the list.
+     * @return
+     */
     public Result<ImmutableList<T>> tail() {
         Node<T> next = node.next();
         if (next == null) {

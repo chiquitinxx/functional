@@ -10,14 +10,32 @@ import java.util.function.Function;
  */
 public class Agent<T> {
 
+    /**
+     *
+     * @param initialValue
+     * @return
+     * @param <T>
+     */
     public static <T> Agent<T> create(T initialValue) {
         return new Agent<>(initialValue);
     }
 
+    /**
+     *
+     * @param agent
+     * @return
+     * @param <T>
+     */
     public static <T> T get(Agent<T> agent) {
         return agent.getValue();
     }
 
+    /**
+     *
+     * @param agent
+     * @param function
+     * @param <T>
+     */
     public static <T> void update(Agent<T> agent, Function<T, T> function) {
         agent.changeValue(function);
     }
