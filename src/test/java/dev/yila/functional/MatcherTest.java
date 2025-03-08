@@ -21,7 +21,7 @@ public class MatcherTest {
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number < 3, number -> "two")
                 .orElse(number -> "other");
-        DirectResult<String, ?> result = matcher.resultFor(input);
+        DirectResult<String> result = matcher.resultFor(input);
         assertEquals(result.getOrThrow(), expectedResult);
     }
 
@@ -33,7 +33,7 @@ public class MatcherTest {
 
     @Test
     void matchFirstMatcher() {
-        Result<String, ?> result = Matcher.create(Integer.class, String.class)
+        Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 2, number -> "two")
                 .on(number -> number > 0, number -> "greaterThan0")
                 .resultFor(2);
@@ -42,7 +42,7 @@ public class MatcherTest {
 
     @Test
     void staticMatcherEQ() {
-        Result<String, ?> result = Matcher.create(Integer.class, String.class)
+        Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(EQ(2), number -> "two")
                 .resultFor(2);
         assertEquals("two", result.getOrThrow());
@@ -50,7 +50,7 @@ public class MatcherTest {
 
     @Test
     void staticMatcherNEQ() {
-        Result<String, ?> result = Matcher.create(Integer.class, String.class)
+        Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(NEQ(2), number -> "notTwo")
                 .resultFor(5);
         assertEquals("notTwo", result.getOrThrow());
@@ -58,7 +58,7 @@ public class MatcherTest {
 
     @Test
     void staticMatcherEQAndNEQ() {
-        Result<String, ?> result = Matcher.create(Integer.class, String.class)
+        Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(NEQ(2), number -> "notTwo")
                 .on(EQ(3), number -> "three")
                 .orElse(number -> "isTwo")
@@ -68,7 +68,7 @@ public class MatcherTest {
 
     @Test
     void matchWithoutElse() {
-        Result<String, ?> result = Matcher.create(Integer.class, String.class)
+        Result<String> result = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number < 3, number -> "two")
                 .resultFor(3);
@@ -81,7 +81,7 @@ public class MatcherTest {
         Matcher<Integer, String> matcher = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number < 3, number -> "two");
-        Result<String, ?> result = matcher.resultFor(3);
+        Result<String> result = matcher.resultFor(3);
         assertTrue(result.hasFailure());
         Matcher newMatcher = matcher.on(number -> number == 3, number -> "Yes");
         assertTrue(matcher.resultFor(3).hasFailure());

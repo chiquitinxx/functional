@@ -18,7 +18,7 @@ public abstract class ResultTest {
 
     @Test
     void successResult() {
-        Result<Integer, Failure> result = number(5);
+        Result<Integer> result = number(5);
         assertFalse(result.hasFailure());
         result.onSuccess(number -> assertEquals(5, number));
         result.onFailure(r -> fail("never executed"));
@@ -28,7 +28,7 @@ public abstract class ResultTest {
 
     @Test
     void codeDescriptionFailureResult() {
-        Result<Integer, Failure> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
+        Result<Integer> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
         assertTrue(result.hasFailure());
         result.onSuccess(number -> fail("never executed"));
         result.onFailure(r -> assertEquals(result.failure().get(), r.failure().get()));
@@ -38,14 +38,14 @@ public abstract class ResultTest {
 
     @Test
     void descriptionFailureResult() {
-        Result<Integer, Failure> result = failure(DescriptionFailure.create(DESCRIPTION));
+        Result<Integer> result = failure(DescriptionFailure.create(DESCRIPTION));
         assertEquals(DESCRIPTION, result.failure().get().toString());
     }
 
     @Test
     void chainNumberResults() {
-        Result<Integer, Failure> result = number(5);
-        Result<Integer, Failure> multiplyBy3 = result.map(number -> number * 3);
+        Result<Integer> result = number(5);
+        Result<Integer> multiplyBy3 = result.map(number -> number * 3);
         assertEquals(15, multiplyBy3.getOrThrow());
         assertEquals(25, result.flatMap(number -> number(number * 5)).getOrThrow());
         assertEquals(30, multiplyBy3.flatMap(number -> number(number * 2)).getOrThrow());
@@ -55,7 +55,7 @@ public abstract class ResultTest {
     void flatMapWithCheckedException() {
         ThrowingFunction<Integer, Integer, RuntimeException> function =
                 (input) -> input + 2;
-        Result<Integer, Failure> result = number(6)
+        Result<Integer> result = number(6)
                 .flatMap(function, RuntimeException.class);
         assertEquals(8, result.getOrThrow());
     }
@@ -65,18 +65,18 @@ public abstract class ResultTest {
         ThrowingFunction throwingFunction = (input) -> {
             throw new RuntimeException("Fail");
         };
-        Result<Integer, Failure> result = number(3)
+        Result<Integer> result = number(3)
                 .flatMap(throwingFunction, RuntimeException.class);
         assertEquals("ThrowableFailure: java.lang.RuntimeException: Fail", result.failure().get().toString());
     }
 
     @Test
     void joinResults() {
-        Result<Integer, Failure> joinFailure = Result.join(list -> list.get(0),
+        Result<Integer> joinFailure = Result.join(list -> list.get(0),
                 number(5),
                 failure(CodeDescriptionFailure.create(CODE, DESCRIPTION)));
         assertTrue(joinFailure.hasFailure());
-        Result<Integer, Failure> join = Result.join(list ->
+        Result<Integer> join = Result.join(list ->
                         list.stream().reduce(0, Integer::sum),
                 number(5),
                 number(4),
@@ -86,16 +86,16 @@ public abstract class ResultTest {
 
     @Test
     void nothingHappensMapFailure() {
-        Result<Integer, Failure> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
-        Result<Integer, Failure> mapResult = result.map(number -> number * 2);
+        Result<Integer> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
+        Result<Integer> mapResult = result.map(number -> number * 2);
         assertTrue(mapResult.hasFailure());
         assertEquals("DirectResult(FAILURE): someCode: some description", result.toString());
     }
 
     @Test
     void nothingHappensFlatMapFailure() {
-        Result<Integer, Failure> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
-        Result<Integer, Failure> mapResult = result.flatMap(number -> number(number * 2));
+        Result<Integer> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
+        Result<Integer> mapResult = result.flatMap(number -> number(number * 2));
         assertTrue(mapResult.hasFailure());
         assertEquals(result.failure(), mapResult.failure());
     }
@@ -103,7 +103,7 @@ public abstract class ResultTest {
     @Test
     void throwableFailure() {
         String exceptionMessage = "fail :(";
-        Result<?, Failure> result = failure(new RuntimeException(exceptionMessage));
+        Result<?> result = failure(new RuntimeException(exceptionMessage));
         Throwable throwable = result.failure().get().toThrowable();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
@@ -116,7 +116,7 @@ public abstract class ResultTest {
 
     @Test
     void toOptional() {
-        Result<String, Failure> good = string("good");
+        Result<String> good = string("good");
         Result failure = failure(CodeDescriptionFailure.create("failure", "result"));
 
         assertEquals("good", good.value().get());
@@ -127,7 +127,7 @@ public abstract class ResultTest {
     @Test
     void removeOptionalFromFailure() {
         Result failure = failure(new SimpleFailure());
-        Result<String, Failure> result = removeOptional(failure);
+        Result<String> result = removeOptional(failure);
 
         assertTrue(result.hasFailure());
         assertTrue(result.failure().get() instanceof SimpleFailure);
@@ -135,8 +135,8 @@ public abstract class ResultTest {
 
     @Test
     void removeEmptyOptional() {
-        Result<Optional<String>, Failure> empty = optional(Optional.empty());
-        Result<String, Failure> result = removeOptional(empty);
+        Result<Optional<String>> empty = optional(Optional.empty());
+        Result<String> result = removeOptional(empty);
 
         assertTrue(result.hasFailure());
         assertTrue(result.failure().get().toThrowable() instanceof NoSuchElementException);
@@ -144,17 +144,17 @@ public abstract class ResultTest {
 
     @Test
     void removePresentOptional() {
-        Result<Optional<String>, Failure> present = optional(Optional.of("hello"));
-        Result<String, Failure> result = removeOptional(present);
+        Result<Optional<String>> present = optional(Optional.of("hello"));
+        Result<String> result = removeOptional(present);
 
         assertEquals("hello", result.getOrThrow());
     }
 
     static class SimpleFailure implements Failure {}
 
-    abstract Result<Integer, Failure> number(Integer integer);
-    abstract Result<String, Failure> string(String string);
-    abstract Result<Optional<String>, Failure> optional(Optional<String> optional);
-    abstract Result<Integer, Failure> failure(Failure failure);
-    abstract Result<Integer, Failure> failure(Throwable throwable);
+    abstract Result<Integer> number(Integer integer);
+    abstract Result<String> string(String string);
+    abstract Result<Optional<String>> optional(Optional<String> optional);
+    abstract Result<Integer> failure(Failure failure);
+    abstract Result<Integer> failure(Throwable throwable);
 }

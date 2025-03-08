@@ -75,7 +75,7 @@ public class ImmutableList<T> {
         return node.current();
     }
 
-    public Result<ImmutableList<T>, EmptyTailFailure> tail() {
+    public Result<ImmutableList<T>> tail() {
         Node<T> next = node.next();
         if (next == null) {
             return DirectResult.failure(new EmptyTailFailure());

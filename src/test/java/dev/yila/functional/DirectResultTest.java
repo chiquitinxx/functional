@@ -28,7 +28,7 @@ public class DirectResultTest extends ResultTest {
 
     @Test
     void checkedExceptionNotThrown() {
-        Result<Integer, Failure> result = DirectResult.createChecked(() -> 5, RuntimeException.class);
+        Result<Integer> result = DirectResult.createChecked(() -> 5, RuntimeException.class);
         assertEquals(5, result.getOrThrow());
         assertEquals("DirectResult(OK): 5", result.toString());
     }
@@ -39,7 +39,7 @@ public class DirectResultTest extends ResultTest {
         ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
-        Result<Integer, Failure> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class);
+        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class);
         assertEquals("ThrowableFailure: java.lang.RuntimeException: fail :(", result.failure().get().toString());
         ThrowableFailure failure = (ThrowableFailure) result.failure().get();
         assertEquals(exceptionMessage, failure.getThrowable().getMessage());
@@ -50,7 +50,7 @@ public class DirectResultTest extends ResultTest {
         ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException("aaa");
         };
-        Result<Integer, Failure> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class)
+        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class)
                 .flatMap(number -> {
                     throw new RuntimeException("uuu");
                 }, RuntimeException.class);
@@ -63,7 +63,7 @@ public class DirectResultTest extends ResultTest {
         ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
-        Result<Integer, Failure> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class);
+        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class);
         Throwable throwable = result.failure().get().toThrowable();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
@@ -104,7 +104,7 @@ public class DirectResultTest extends ResultTest {
         Map<String, Object> map = new HashMap<>();
         map.put("number", 6);
 
-        Result<Map<String, Object>, Failure> result = DirectResult.validate(map,
+        Result<Map<String, Object>> result = DirectResult.validate(map,
                 CodeDescriptionFailure.create("map", "missing number"),
                 m -> m.containsKey("number"));
 
@@ -116,7 +116,7 @@ public class DirectResultTest extends ResultTest {
         Map<String, Object> map = new HashMap<>();
         map.put("number", 6);
 
-        Result<Map<String, Object>, Failure> result = DirectResult.validate(map,
+        Result<Map<String, Object>> result = DirectResult.validate(map,
                 CodeDescriptionFailure.create("map", "missing random"),
                 m -> m.containsKey("random"));
 
@@ -142,7 +142,7 @@ public class DirectResultTest extends ResultTest {
         Map<String, Object> map = new HashMap<>();
         map.put("number", 6);
 
-        Result<Map<String, Object>, Failure> result = DirectResult.validate(map,
+        Result<Map<String, Object>> result = DirectResult.validate(map,
                 Pair.of(
                         CodeDescriptionFailure.create("map", "missing number"),
                         m -> m.containsKey("number")
@@ -164,27 +164,27 @@ public class DirectResultTest extends ResultTest {
     }
 
     @Override
-    Result<Integer, Failure> number(Integer integer) {
+    Result<Integer> number(Integer integer) {
         return DirectResult.ok(integer);
     }
 
     @Override
-    Result<String, Failure> string(String string) {
+    Result<String> string(String string) {
         return DirectResult.ok(string);
     }
 
     @Override
-    Result<Optional<String>, Failure> optional(Optional<String> optional) {
+    Result<Optional<String>> optional(Optional<String> optional) {
         return DirectResult.ok(optional);
     }
 
     @Override
-    Result<Integer, Failure> failure(Failure failure) {
+    Result<Integer> failure(Failure failure) {
         return DirectResult.failure(failure);
     }
 
     @Override
-    Result<Integer, Failure> failure(Throwable throwable) {
+    Result<Integer> failure(Throwable throwable) {
         return DirectResult.failure(throwable);
     }
 }

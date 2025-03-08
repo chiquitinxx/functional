@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * This class is immutable and returns a new instance after any modifying operation.
  * @param <T> Type of result value
  */
-public interface Result<T, F extends Failure> {
+public interface Result<T> {
 
     /**
      * Check the current result has failures.
@@ -36,13 +36,13 @@ public interface Result<T, F extends Failure> {
      * @param function
      * @return T
      */
-    T orElse(Function<Result<T, F>, T> function);
+    T orElse(Function<Result<T>, T> function);
 
     /**
      *
      * @return
      */
-    Optional<F> failure();
+    Optional<Failure> failure();
 
     /**
      * New result with the execution of the function if is success
@@ -50,7 +50,7 @@ public interface Result<T, F extends Failure> {
      * @return
      * @param <R>
      */
-    <R> Result<R, F> map(Function<T, R> function);
+    <R> Result<R> map(Function<T, R> function);
 
     /**
      * Flatten map current result with a function that returns a new result.
@@ -58,7 +58,7 @@ public interface Result<T, F extends Failure> {
      * @return
      * @param <R>
      */
-    <R> Result<R, F> flatMap(Function<T, Result<R, F>> function);
+    <R> Result<R> flatMap(Function<T, Result<R>> function);
 
     /**
      * Flatten map current result with a throwing function that returns a new result.
@@ -68,21 +68,21 @@ public interface Result<T, F extends Failure> {
      * @param <R>
      * @param <K>
      */
-    <R, K extends Throwable> Result<R, F> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass);
+    <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass);
 
     /**
      * Execute the consumer if the result is success
      * @param consumer
      * @return
      */
-    Result<T, F> onSuccess(Consumer<T> consumer);
+    Result<T> onSuccess(Consumer<T> consumer);
 
     /**
      * Execute the consumer if the result has failures
      * @param consumer
      * @return
      */
-    Result<T, F> onFailure(Consumer<Result<T, F>> consumer);
+    Result<T> onFailure(Consumer<Result<T>> consumer);
 
     /**
      * Get the value if result is success.
@@ -96,10 +96,9 @@ public interface Result<T, F extends Failure> {
      * @param results
      * @return
      * @param <T>
-     * @param <F>
      */
-    static <T, F extends Failure> DirectResult<T, F> join(Function<List<T>, T> joinOks,
-                                                          Result<T, F>... results) {
+    @SafeVarargs
+    static <T> DirectResult<T> join(Function<List<T>, T> joinOks, Result<T>... results) {
         List<Failure> failures = Arrays.stream(results)
                 .parallel()
                 .filter(Result::hasFailure)
@@ -116,15 +115,14 @@ public interface Result<T, F extends Failure> {
     }
 
     /**
-     * Unwarp optional
+     * Unwrap optional
      * @param result
      * @return
      * @param <U>
-     * @param <F>
      */
-    static <U, F extends Failure> Result<U, F> removeOptional(Result<Optional<U>, F> result) {
+    static <U> Result<U> removeOptional(Result<Optional<U>> result) {
         if (result.hasFailure()) {
-            return (Result<U, F>) result;
+            return (Result<U>) result;
         } else {
             Optional<U> value = result.getOrThrow();
             return DirectResult.createChecked(value::get, NoSuchElementException.class);

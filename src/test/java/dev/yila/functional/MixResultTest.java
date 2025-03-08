@@ -1,6 +1,5 @@
 package dev.yila.functional;
 
-import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.RepeatedTest;
 
 import java.util.concurrent.CompletableFuture;
@@ -11,11 +10,11 @@ public class MixResultTest {
 
     @RepeatedTest(10)
     public void joinAll() {
-        Result<String, Failure> direct = DirectResult.ok("direct");
-        Result<String, Failure> async = AsyncResult.create(CompletableFuture.completedFuture("async"));
-        Result<String, Failure> lazy = LazyResult.create(() -> "lazy");
+        Result<String> direct = DirectResult.ok("direct");
+        Result<String> async = AsyncResult.create(CompletableFuture.completedFuture("async"));
+        Result<String> lazy = LazyResult.create(() -> "lazy");
 
-        Result<String, Failure> result = Result.join(list -> {
+        Result<String> result = Result.join(list -> {
             StringBuilder all = new StringBuilder();
             list.forEach(all::append);
             return all.toString();

@@ -12,18 +12,16 @@ import java.util.stream.Collectors;
  * Class to store the direct result value or the failure.
  * This class is immutable and returns a new instance after any modifying operation.
  * @param <T> Type of the value
- * @param <F> Type of the failure
  */
-public class DirectResult<T, F extends Failure> implements Result<T, F> {
+public class DirectResult<T> implements Result<T> {
 
     /**
      * Create a new success result.
      * @param value
      * @return
      * @param <T> Type of the value
-     * @param <F> Type of the failure
      */
-    public static <T, F extends Failure> DirectResult<T, F> ok(T value) {
+    public static <T> DirectResult<T> ok(T value) {
         if (value == null) {
             throw new IllegalArgumentException("Value can not be null");
         }
@@ -35,13 +33,12 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
      * @param failure
      * @return
      * @param <T>
-     * @param <F>
      */
-    public static <T, F extends Failure> DirectResult<T, F> failure(Failure failure) {
+    public static <T> DirectResult<T> failure(Failure failure) {
         if (failure == null) {
             throw new IllegalArgumentException("Failure can not be null.");
         }
-        return (DirectResult<T, F>) new DirectResult<>(null, failure);
+        return new DirectResult<>(null, failure);
     }
 
     /**
@@ -49,13 +46,12 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
      * @param throwable
      * @return
      * @param <T>
-     * @param <F>
      */
-    public static <T, F extends Failure> DirectResult<T, F> failure(Throwable throwable) {
+    public static <T> DirectResult<T> failure(Throwable throwable) {
         if (throwable == null) {
             throw new IllegalArgumentException("Fail can not be null.");
         }
-        return (DirectResult<T, F>) new DirectResult<>(null, Failure.create(throwable));
+        return new DirectResult<>(null, Failure.create(throwable));
     }
 
     /**
@@ -63,13 +59,12 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
      * @param failures
      * @return
      * @param <T>
-     * @param <F>
      */
-    public static <T, F extends Failure> DirectResult<T, F> failures(List<Failure> failures) {
+    public static <T> DirectResult<T> failures(List<Failure> failures) {
         if (failures == null || failures.isEmpty()) {
             throw new IllegalArgumentException("Failures list can not be null.");
         }
-        return (DirectResult<T, F>) new DirectResult<>(null, new MultipleFailures(failures));
+        return new DirectResult<>(null, new MultipleFailures(failures));
     }
 
     /**
@@ -79,9 +74,8 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
      * @return
      * @param <T>
      * @param <K>
-     * @param <F>
      */
-    public static <T, K extends Throwable, F extends Failure> DirectResult<T, F> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
+    public static <T, K extends Throwable> DirectResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
         try {
             return new DirectResult<>(throwingSupplier.get(), null);
         } catch (Throwable throwable) {
@@ -102,7 +96,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
      * @param <T>
      * @param <F>
      */
-    public static <T, F extends Failure> Result<T, F> validate(T value, F failure, Function<T, Boolean> function) {
+    public static <T, F extends Failure> Result<T> validate(T value, F failure, Function<T, Boolean> function) {
         if (failure == null) {
             throw new IllegalArgumentException("Failure can not be null.");
         }
@@ -126,7 +120,8 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
      * @param <T>
      * @param <F>
      */
-    public static <T, F extends Failure> Result<T, F> validate(T value, Pair<F, Function<T, Boolean>>... validations) {
+    @SafeVarargs
+    public static <T, F extends Failure> Result<T> validate(T value, Pair<F, Function<T, Boolean>>... validations) {
         if (value == null) {
             throw new IllegalArgumentException("Value can not be null.");
         }
@@ -140,7 +135,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     }
 
     private final T value;
-    private final F failure;
+    private final Failure failure;
 
     @Override
     public boolean hasFailure() {
@@ -156,7 +151,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public T orElse(Function<Result<T, F>, T> function) {
+    public T orElse(Function<Result<T>, T> function) {
         if (this.hasFailure()) {
             return function.apply(this);
         }
@@ -164,12 +159,12 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public Optional<F> failure() {
+    public Optional<Failure> failure() {
         return Optional.ofNullable(this.failure);
     }
 
     @Override
-    public <R> Result<R, F> map(Function<T, R> function) {
+    public <R> Result<R> map(Function<T, R> function) {
         Objects.requireNonNull(function);
         if (hasFailure()) {
             return DirectResult.failure(this.failure);
@@ -179,7 +174,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public <R> Result<R, F> flatMap(Function<T, Result<R, F>> function) {
+    public <R> Result<R> flatMap(Function<T, Result<R>> function) {
         Objects.requireNonNull(function);
         if (hasFailure()) {
             return DirectResult.failure(this.failure);
@@ -189,7 +184,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R, F> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);
         if (hasFailure()) {
@@ -200,7 +195,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public Result<T, F> onSuccess(Consumer<T> consumer) {
+    public Result<T> onSuccess(Consumer<T> consumer) {
         if (!hasFailure()) {
             consumer.accept(this.value);
         }
@@ -208,7 +203,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public Result<T, F> onFailure(Consumer<Result<T, F>> consumer) {
+    public Result<T> onFailure(Consumer<Result<T>> consumer) {
         if (hasFailure()) {
             consumer.accept(this);
         }
@@ -229,7 +224,7 @@ public class DirectResult<T, F extends Failure> implements Result<T, F> {
         return Optional.of(value);
     }
 
-    private DirectResult(T value, F failure) {
+    private DirectResult(T value, Failure failure) {
         this.value = value;
         this.failure = failure;
     }

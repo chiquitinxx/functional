@@ -15,9 +15,8 @@ import java.util.function.Supplier;
  * LazyResult executes suppliers and consecutive functions asynchronously.
  * The result is lazy, and only begins computing after result() or start() is called.
  * @param <T> success result type
- * @param <F> failure type
  */
-public class LazyResult<T, F extends Failure> implements Result<T, F> {
+public class LazyResult<T> implements Result<T> {
 
     /**
      * Create a lazy result from a supplier.
@@ -26,7 +25,7 @@ public class LazyResult<T, F extends Failure> implements Result<T, F> {
      * @param <V>
      * @param <F>
      */
-    public static <V, F extends Failure> LazyResult<V, F> create(Supplier<V> supplier) {
+    public static <V, F extends Failure> LazyResult<V> create(Supplier<V> supplier) {
         if (supplier == null) {
             throw new IllegalArgumentException("null is not a valid supplier to create LazyResult");
         }
@@ -34,14 +33,14 @@ public class LazyResult<T, F extends Failure> implements Result<T, F> {
     }
 
     private final Supplier<T> supplier;
-    private CompletableFuture<DirectResult<T, F>> completableFuture;
+    private CompletableFuture<DirectResult<T>> completableFuture;
 
     private LazyResult(Supplier<T> supplier) {
         this.supplier = supplier;
     }
 
     @Override
-    public <V> Result<V, F> map(Function<T, V> function) {
+    public <V> Result<V> map(Function<T, V> function) {
         if (function == null) {
             throw new IllegalArgumentException("null is not a valid function to use LazyResult.map");
         }
@@ -49,12 +48,12 @@ public class LazyResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public Result<T, F> onSuccess(Consumer<T> consumer) {
+    public Result<T> onSuccess(Consumer<T> consumer) {
         return getResult().onSuccess(consumer);
     }
 
     @Override
-    public Result<T, F> onFailure(Consumer<Result<T, F>> consumer) {
+    public Result<T> onFailure(Consumer<Result<T>> consumer) {
         return getResult().onFailure(consumer);
     }
 
@@ -64,10 +63,10 @@ public class LazyResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public <V> Result<V, F> flatMap(Function<T, Result<V, F>> function) {
+    public <V> Result<V> flatMap(Function<T, Result<V>> function) {
         Objects.requireNonNull(function);
         return new LazyResult<>(() -> {
-            Result<V, F> value = function.apply(this.supplier.get());
+            Result<V> value = function.apply(this.supplier.get());
             if (value.hasFailure()) {
                 throw new LazyResultException(value.failure().get());
             }
@@ -76,7 +75,7 @@ public class LazyResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R, F> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);
         return flatMap((input) -> {
@@ -103,27 +102,27 @@ public class LazyResult<T, F extends Failure> implements Result<T, F> {
     }
 
     @Override
-    public T orElse(Function<Result<T, F>, T> function) {
+    public T orElse(Function<Result<T>, T> function) {
         return getResult().orElse(function);
     }
 
     @Override
-    public Optional<F> failure() {
+    public Optional<Failure> failure() {
         return getResult().failure();
     }
 
-    private synchronized CompletableFuture<DirectResult<T, F>> execute() {
+    private synchronized CompletableFuture<DirectResult<T>> execute() {
         if (completableFuture == null) {
             completableFuture = toCompletableResult(this.supplier);
         }
         return completableFuture;
     }
 
-    private Result<T, F> getResult() {
+    private Result<T> getResult() {
         return execute().join();
     }
 
-    private static <T, F extends Failure> CompletableFuture<DirectResult<T, F>> toCompletableResult(Supplier<T> supplier) {
+    private static <T, F extends Failure> CompletableFuture<DirectResult<T>> toCompletableResult(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier).handleAsync((result, throwable) -> {
             if (throwable != null) {
                 CompletionException completionException = (CompletionException) throwable;

@@ -17,14 +17,14 @@ public class AsyncResultTest extends ResultTest {
 
     @Test
     void createAsyncResultFromFuture() {
-        AsyncResult<Integer, ?> result = AsyncResult.create(CompletableFuture.completedFuture(5));
+        AsyncResult<Integer> result = AsyncResult.create(CompletableFuture.completedFuture(5));
         assertEquals(5, result.getOrThrow());
     }
 
     @Test
     void asyncFailedWithRuntimeException() {
         CompletableFuture<String> completableFuture = new CompletableFuture<>();
-        AsyncResult<String, ?> result = AsyncResult.create(completableFuture);
+        AsyncResult<String> result = AsyncResult.create(completableFuture);
         completableFuture.completeExceptionally(runtimeException);
         assertTrue(result.hasFailure());
         Failure failure = result.failure().get();
@@ -38,11 +38,11 @@ public class AsyncResultTest extends ResultTest {
             return "hello";
         };
         LocalDateTime before = LocalDateTime.now();
-        Result<String, Failure> first = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
-        Result<String, Failure> second = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
-        Result<String, Failure> third = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
+        Result<String> first = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
+        Result<String> second = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
+        Result<String> third = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
 
-        Result<String, Failure> join = Result.join((list) -> list.stream()
+        Result<String> join = Result.join((list) -> list.stream()
                 .reduce("", String::concat), first, second, third);
 
         assertEquals("hellohellohello", join.getOrThrow());
@@ -50,27 +50,27 @@ public class AsyncResultTest extends ResultTest {
     }
 
     @Override
-    Result<Integer, Failure> number(Integer integer) {
+    Result<Integer> number(Integer integer) {
         return AsyncResult.create(CompletableFuture.completedFuture(integer));
     }
 
     @Override
-    Result<String, Failure> string(String string) {
+    Result<String> string(String string) {
         return AsyncResult.create(CompletableFuture.completedFuture(string));
     }
 
     @Override
-    Result<Optional<String>, Failure> optional(Optional<String> optional) {
+    Result<Optional<String>> optional(Optional<String> optional) {
         return AsyncResult.create(CompletableFuture.completedFuture(optional));
     }
 
     @Override
-    Result<Integer, Failure> failure(Failure failure) {
+    Result<Integer> failure(Failure failure) {
         return DirectResult.failure(failure);
     }
 
     @Override
-    Result<Integer, Failure> failure(Throwable throwable) {
+    Result<Integer> failure(Throwable throwable) {
         return DirectResult.failure(throwable);
     }
 }
