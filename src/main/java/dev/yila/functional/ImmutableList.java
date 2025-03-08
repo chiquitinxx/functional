@@ -3,6 +3,10 @@ package dev.yila.functional;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Immutable list that can be divided by head and tails.
+ * @param <T>
+ */
 public class ImmutableList<T> {
 
     @SafeVarargs
@@ -42,17 +46,6 @@ public class ImmutableList<T> {
                 }
             }
             return this.nextNode;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof Node &&
-                    Arrays.equals(this.all, ((Node)obj).all);
-        }
-
-        @Override
-        public int hashCode() {
-            return this.current.hashCode();
         }
 
         @Override

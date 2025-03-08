@@ -4,6 +4,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
+/**
+ * Agent that store a value, and modification of the value are thread safe.
+ * @param <T>
+ */
 public class Agent<T> {
 
     public static <T> Agent<T> create(T initialValue) {

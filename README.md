@@ -8,15 +8,19 @@ Pair<L,R> -> a class containing a pair of values.
 
 Trio<F,S,T> -> a class containing a trio of values.
 
-Result<T, F extends Failure> -> Interface mix between "Optional" and "Either".
+Result<T> -> Interface mix between "Optional" and "Either".
 
-DirectResult<T, F> -> Implementation of Result.
+DirectResult<T> -> Synchronous implementation of Result.
 
-AsyncResult<T, F> -> Asynchronous version of Result.
+AsyncResult<T> -> Asynchronous version of Result.
 
-LazyResult<T, F> -> Lazy version of Result.
+LazyResult<T> -> Lazy version of Result.
 
 Matcher<I, O> -> Little pattern matcher evaluator for values.
+
+Agent<T> -> store value, and modifications are thread safe.
+
+ImmutableList<T> -> immutable list to divide with head and tail.
 
 ## Dependencies
 
