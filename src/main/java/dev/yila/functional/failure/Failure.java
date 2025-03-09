@@ -6,6 +6,14 @@ public interface Failure {
         return new ThrowableFailure(t);
     }
 
+    static Failure create(String message) {
+        return new DescriptionFailure(message);
+    }
+
+    static Failure create(String code, String message) {
+        return new CodeDescriptionFailure(code, message);
+    }
+
     default Throwable toThrowable() {
         if (this instanceof ThrowableFailure) {
             return ((ThrowableFailure)this).getThrowable();

@@ -1,5 +1,6 @@
 package dev.yila.functional.failure;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -10,6 +11,10 @@ public class MultipleFailures implements Failure {
 
     public MultipleFailures(List<Failure> failures) {
         this.failures = failures;
+    }
+
+    public MultipleFailures(Failure... failures) {
+        this.failures = Arrays.asList(failures);
     }
 
     @Override

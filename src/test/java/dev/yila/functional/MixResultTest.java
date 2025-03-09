@@ -1,6 +1,9 @@
 package dev.yila.functional;
 
+import dev.yila.functional.failure.Failure;
+import dev.yila.functional.failure.MultipleFailures;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -21,5 +24,16 @@ public class MixResultTest {
         }, direct, async, lazy);
 
         assertEquals("directasynclazy", result.getOrThrow());
+    }
+
+    @Test
+    public void multipleFailures() {
+        Failure multiple = new MultipleFailures(
+                Failure.create(new Throwable("hello")),
+                Failure.create("message"),
+                Failure.create("code", "description")
+        );
+
+        assertEquals("[ThrowableFailure: java.lang.Throwable: hello, message, code: description]", multiple.toString());
     }
 }
