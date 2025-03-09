@@ -1,6 +1,7 @@
 package dev.yila.functional;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -27,6 +28,19 @@ public class ImmutableList<T> {
             }
         }
         return new ImmutableList<>(new Node<>(elements));
+    }
+
+    public static <T> ImmutableList<T> from(List<T> list) {
+        if (list == null || list.size() == 0) {
+            throw new IllegalArgumentException("List must contains at least 1 element.");
+        }
+        for (T t : list) {
+            if (t == null) {
+                throw new IllegalArgumentException("Elements in the list can not be null.");
+            }
+        }
+        T[] array = (T[]) list.stream().toArray();
+        return new ImmutableList<>(new Node<>(array));
     }
 
     static class Node<T> {
