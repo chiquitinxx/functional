@@ -1,6 +1,5 @@
 package dev.yila.functional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,7 +26,7 @@ public class ImmutableList<T> {
                 throw new IllegalArgumentException("Elements can not be null.");
             }
         }
-        return new ImmutableList<>(new Node<>(elements));
+        return new ImmutableList<>(new Elements<>(elements));
     }
 
     public static <T> ImmutableList<T> from(List<T> list) {
@@ -39,38 +38,50 @@ public class ImmutableList<T> {
                 throw new IllegalArgumentException("Elements in the list can not be null.");
             }
         }
-        T[] array = (T[]) list.stream().toArray();
-        return new ImmutableList<>(new Node<>(array));
+        T[] array = (T[]) list.toArray();
+        return new ImmutableList<>(new Elements<>(array));
     }
 
-    static class Node<T> {
+    static class Elements<T> {
         private final T current;
         private final T[] all;
-        private Node<T> nextNode;
+        private Elements<T> nextElements;
+        private int position;
 
-        Node(T[] all) {
+        Elements(T[] all) {
             this.all = all;
+            this.position = 0;
             this.current = all[0];
+        }
+
+        Elements(T[] all, int position) {
+            this.all = all;
+            this.position = position;
+            this.current = all[position];
         }
 
         T current() {
             return this.current;
         }
 
-        Node<T> next() {
-            if (nextNode == null) {
-                if (all.length == 1) {
+        Elements<T> next() {
+            if (nextElements == null) {
+                if (all.length - position == 1) {
                     return null;
                 } else {
-                    this.nextNode = new Node<>(Arrays.copyOfRange(all, 1, all.length));
+                    this.nextElements = new Elements<>(all, position + 1);
                 }
             }
-            return this.nextNode;
+            return this.nextElements;
+        }
+
+        int size() {
+            return all.length - position;
         }
 
         @Override
         public String toString() {
-            Node<T> next = this.next();
+            Elements<T> next = this.next();
             if (next == null) {
                 return this.current.toString();
             }
@@ -78,10 +89,10 @@ public class ImmutableList<T> {
         }
     }
 
-    private final Node<T> node;
+    private final Elements<T> elements;
 
-    private ImmutableList(Node<T> node) {
-        this.node = node;
+    private ImmutableList(Elements<T> elements) {
+        this.elements = elements;
     }
 
     /**
@@ -89,7 +100,7 @@ public class ImmutableList<T> {
      * @return
      */
     public T head() {
-        return node.current();
+        return elements.current();
     }
 
     /**
@@ -97,11 +108,19 @@ public class ImmutableList<T> {
      * @return
      */
     public Result<ImmutableList<T>> tail() {
-        Node<T> next = node.next();
+        Elements<T> next = elements.next();
         if (next == null) {
             return DirectResult.failure(new EmptyTailFailure());
         }
         return DirectResult.ok(new ImmutableList<>(next));
+    }
+
+    /**
+     * Size of the list
+     * @return
+     */
+    public int size() {
+        return elements.size();
     }
 
     @Override
@@ -114,6 +133,6 @@ public class ImmutableList<T> {
 
     @Override
     public String toString() {
-        return "[" + this.node.toString() +  "]";
+        return "[" + this.elements.toString() +  "]";
     }
 }

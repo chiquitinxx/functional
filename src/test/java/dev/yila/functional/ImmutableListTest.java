@@ -1,13 +1,13 @@
 package dev.yila.functional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,9 +47,9 @@ public class ImmutableListTest {
         assertTrue(list.tail().failure().get() instanceof EmptyTailFailure);
     }
 
-    @Test
-    public void longList() {
-        int length = 10000;
+    @ParameterizedTest
+    @ValueSource(ints = { 100, 1_000, 10_000, 100_000, 1_000_000, 4_000_000 })
+    public void longList(int length) {
         List<Integer> numbers = Stream.iterate(1, x -> x + 1)
                 .limit(length)
                 .collect(Collectors.toList());
@@ -60,5 +60,12 @@ public class ImmutableListTest {
             rest = list.tail();
         }
         assertEquals(length, list.head());
+    }
+
+    @Test
+    public void listSize() {
+        assertEquals(1, ImmutableList.create("hello").size());
+        assertEquals(2, ImmutableList.create("hello", "world").size());
+        assertEquals(1, ImmutableList.create("hello", "world").tail().getOrThrow().size());
     }
 }
