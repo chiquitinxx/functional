@@ -12,14 +12,17 @@ public class MatcherTest {
 
     @ParameterizedTest
     @CsvSource({
+            "-1, lessThan3",
+            "0, lessThan3",
             "1, one",
-            "2, two",
-            "3, other"
+            "2, lessThan3",
+            "3, other",
+            "4, other"
     })
     void matchNumbers(Integer input, String expectedResult) {
         Matcher<Integer, String> matcher = Matcher.create(Integer.class, String.class)
                 .on(number -> number == 1, number -> "one")
-                .on(number -> number < 3, number -> "two")
+                .on(number -> number < 3, number -> "lessThan3")
                 .orElse(number -> "other");
         DirectResult<String> result = matcher.resultFor(input);
         assertEquals(result.getOrThrow(), expectedResult);
