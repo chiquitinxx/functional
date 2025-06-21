@@ -82,7 +82,7 @@ public interface Result<T> {
      * @param consumer
      * @return
      */
-    Result<T> onFailure(Consumer<Result<T>> consumer);
+    Result<T> onFailure(Consumer<Failure> consumer);
 
     /**
      * Get the value if result is success.

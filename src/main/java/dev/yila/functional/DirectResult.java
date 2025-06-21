@@ -203,9 +203,9 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
-    public Result<T> onFailure(Consumer<Result<T>> consumer) {
+    public Result<T> onFailure(Consumer<Failure> consumer) {
         if (hasFailure()) {
-            consumer.accept(this);
+            consumer.accept(this.failure);
         }
         return this;
     }

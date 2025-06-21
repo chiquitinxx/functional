@@ -31,7 +31,7 @@ public abstract class ResultTest {
         Result<Integer> result = failure(CodeDescriptionFailure.create(CODE, DESCRIPTION));
         assertTrue(result.hasFailure());
         result.onSuccess(number -> fail("never executed"));
-        result.onFailure(r -> assertEquals(result.failure().get(), r.failure().get()));
+        result.onFailure(f -> assertEquals(result.failure().get(), f));
         assertEquals(0, result.orElse(r -> 0));
         assertThrows(NoSuchElementException.class, result::getOrThrow);
     }

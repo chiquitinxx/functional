@@ -53,7 +53,7 @@ public class LazyResult<T> implements Result<T> {
     }
 
     @Override
-    public Result<T> onFailure(Consumer<Result<T>> consumer) {
+    public Result<T> onFailure(Consumer<Failure> consumer) {
         return getResult().onFailure(consumer);
     }
 
