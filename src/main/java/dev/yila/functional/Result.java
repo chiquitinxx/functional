@@ -120,7 +120,7 @@ public interface Result<T> {
      * @return
      * @param <U>
      */
-    static <U> Result<U> removeOptional(Result<Optional<U>> result) {
+    static <U> Result<U> join(Result<Optional<U>> result) {
         if (result.hasFailure()) {
             return (Result<U>) result;
         } else {

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import static dev.yila.functional.Result.removeOptional;
+import static dev.yila.functional.Result.join;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class ResultTest {
@@ -125,9 +125,9 @@ public abstract class ResultTest {
     }
 
     @Test
-    void removeOptionalFromFailure() {
+    void joinFromFailure() {
         Result failure = failure(new SimpleFailure());
-        Result<String> result = removeOptional(failure);
+        Result<String> result = join(failure);
 
         assertTrue(result.hasFailure());
         assertTrue(result.failure().get() instanceof SimpleFailure);
@@ -136,7 +136,7 @@ public abstract class ResultTest {
     @Test
     void removeEmptyOptional() {
         Result<Optional<String>> empty = optional(Optional.empty());
-        Result<String> result = removeOptional(empty);
+        Result<String> result = join(empty);
 
         assertTrue(result.hasFailure());
         assertTrue(result.failure().get().toThrowable() instanceof NoSuchElementException);
@@ -145,7 +145,7 @@ public abstract class ResultTest {
     @Test
     void removePresentOptional() {
         Result<Optional<String>> present = optional(Optional.of("hello"));
-        Result<String> result = removeOptional(present);
+        Result<String> result = join(present);
 
         assertEquals("hello", result.getOrThrow());
     }
