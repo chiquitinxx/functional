@@ -91,21 +91,21 @@ public interface Result<T> {
     Optional<T> value();
 
     /**
-     * Join multiple Results in one Result.
-     * @param joinOks
+     * Sequence multiple Results in one Result.
+     * @param successSequence
      * @param results
      * @return
      * @param <T>
      */
     @SafeVarargs
-    static <T> DirectResult<T> join(Function<List<T>, T> joinOks, Result<T>... results) {
+    static <T> DirectResult<T> sequence(Function<List<T>, T> successSequence, Result<T>... results) {
         List<Failure> failures = Arrays.stream(results)
                 .parallel()
                 .filter(Result::hasFailure)
                 .map(result -> result.failure().get())
                 .collect(Collectors.toList());
         if (failures.isEmpty()) {
-            T res = joinOks.apply(Arrays.stream(results)
+            T res = successSequence.apply(Arrays.stream(results)
                     .map(Result::getOrThrow)
                     .collect(Collectors.toList()));
             return DirectResult.ok(res);

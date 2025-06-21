@@ -131,7 +131,7 @@ public class DirectResult<T> implements Result<T> {
         List<Result> results = Arrays.stream(validations)
                 .map(pair -> validate(value, pair.getLeft(), pair.getRight()))
                 .collect(Collectors.toList());
-        return Result.join(list -> list.get(0), results.toArray(new Result[results.size()]));
+        return Result.sequence(list -> list.get(0), results.toArray(new Result[results.size()]));
     }
 
     private final T value;

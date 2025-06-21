@@ -155,10 +155,10 @@ public class LazyResultTest extends ResultTest {
         Result<String> second = LazyResult.create(supplier);
         Result<String> third = LazyResult.create(supplier);
 
-        Result<String> join = Result.join((list) -> list.stream()
+        Result<String> sequence = Result.sequence((list) -> list.stream()
                 .reduce("", String::concat), first, second, third);
 
-        assertEquals("hellohellohello", join.getOrThrow());
+        assertEquals("hellohellohello", sequence.getOrThrow());
         long millis = ChronoUnit.MILLIS.between(before, LocalDateTime.now());
         System.out.println("Millis: " + millis);
         assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 250);

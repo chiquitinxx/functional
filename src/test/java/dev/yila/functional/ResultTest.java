@@ -71,17 +71,17 @@ public abstract class ResultTest {
     }
 
     @Test
-    void joinResults() {
-        Result<Integer> joinFailure = Result.join(list -> list.get(0),
+    void sequenceResults() {
+        Result<Integer> sequenceFailure = Result.sequence(list -> list.get(0),
                 number(5),
                 failure(CodeDescriptionFailure.create(CODE, DESCRIPTION)));
-        assertTrue(joinFailure.hasFailure());
-        Result<Integer> join = Result.join(list ->
+        assertTrue(sequenceFailure.hasFailure());
+        Result<Integer> sequence = Result.sequence(list ->
                         list.stream().reduce(0, Integer::sum),
                 number(5),
                 number(4),
                 number(3));
-        assertEquals(12, join.getOrThrow());
+        assertEquals(12, sequence.getOrThrow());
     }
 
     @Test

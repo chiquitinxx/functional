@@ -42,10 +42,10 @@ public class AsyncResultTest extends ResultTest {
         Result<String> second = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
         Result<String> third = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
 
-        Result<String> join = Result.join((list) -> list.stream()
+        Result<String> sequence = Result.sequence((list) -> list.stream()
                 .reduce("", String::concat), first, second, third);
 
-        assertEquals("hellohellohello", join.getOrThrow());
+        assertEquals("hellohellohello", sequence.getOrThrow());
         assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 200);
     }
 
