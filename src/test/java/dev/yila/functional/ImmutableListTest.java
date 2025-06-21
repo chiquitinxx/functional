@@ -18,6 +18,7 @@ public class ImmutableListTest {
         assertThrows(IllegalArgumentException.class, ImmutableList::create);
         assertThrows(IllegalArgumentException.class, () -> ImmutableList.create(1, null));
         assertThrows(IllegalArgumentException.class, () -> ImmutableList.from(null));
+        assertThrows(IllegalArgumentException.class, () -> ImmutableList.from(Collections.emptyList()));
         assertThrows(IllegalArgumentException.class, () -> ImmutableList.from(Collections.singletonList(null)));
     }
 

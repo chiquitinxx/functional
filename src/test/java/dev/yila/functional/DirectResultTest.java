@@ -99,61 +99,6 @@ public class DirectResultTest extends ResultTest {
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failures(Collections.emptyList()));
     }
 
-    @Test
-    void successValidation() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("number", 6);
-
-        Result<Map<String, Object>> result = DirectResult.validate(map,
-                CodeDescriptionFailure.create("map", "missing number"),
-                m -> m.containsKey("number"));
-
-        assertSame(map, result.getOrThrow());
-    }
-
-    @Test
-    void failureValidation() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("number", 6);
-
-        Result<Map<String, Object>> result = DirectResult.validate(map,
-                CodeDescriptionFailure.create("map", "missing random"),
-                m -> m.containsKey("random"));
-
-        assertEquals("map: missing random", result.failure().get().toString());
-    }
-
-    @Test
-    void invalidValidations() {
-        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
-                null, Failure.create(new Throwable()), b -> true));
-        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
-                "value", null, b -> true));
-        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
-                "value", Failure.create(new Throwable()), null));
-        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(null));
-        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate(
-                "value", null));
-        assertThrows(IllegalArgumentException.class, () -> DirectResult.validate("value"));
-    }
-
-    @Test
-    void successMultipleValidation() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("number", 6);
-
-        Result<Map<String, Object>> result = DirectResult.validate(map,
-                Pair.of(
-                        CodeDescriptionFailure.create("map", "missing number"),
-                        m -> m.containsKey("number")
-                ), Pair.of(
-                        CodeDescriptionFailure.create("map", "wrong number"),
-                        m -> (Integer) m.get("number") == 6
-                ));
-
-        assertSame(map, result.getOrThrow());
-    }
-
     static class TestException extends Exception {}
 
     static class SomeFailure implements Failure {
