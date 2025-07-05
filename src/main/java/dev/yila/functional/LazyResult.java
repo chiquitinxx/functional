@@ -2,6 +2,7 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.LazyResultException;
+import dev.yila.functional.failure.ThrowableFailure;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -45,6 +46,23 @@ public class LazyResult<T> implements Result<T> {
             throw new IllegalArgumentException("null is not a valid function to use LazyResult.map");
         }
         return new LazyResult<>(() -> function.apply(this.supplier.get()));
+    }
+
+    @Override
+    public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+        Objects.requireNonNull(function);
+        Objects.requireNonNull(throwableClass);
+        return new LazyResult<>(() -> {
+            try {
+                return function.apply(this.supplier.get());
+            } catch (Throwable throwable) {
+                if (throwableClass.isAssignableFrom(throwable.getClass())) {
+                    throw new LazyResultException(new ThrowableFailure(throwable));
+                } else {
+                    throw new RuntimeException(throwable);
+                }
+            }
+        });
     }
 
     @Override

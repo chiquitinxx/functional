@@ -45,12 +45,22 @@ public interface Result<T> {
     Optional<Failure> failure();
 
     /**
-     * New result with the execution of the function if is success
+     * New result with the execution of the function if is success.
      * @param function
      * @return
      * @param <R>
      */
     <R> Result<R> map(Function<T, R> function);
+    
+    /**
+     * New result with the execution of the function that can throw a check exception.
+     * @param function
+     * @param throwableClass
+     * @return
+     * @param <R>
+     * @param <K>
+     */
+    <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass);
 
     /**
      * Flatten map current result with a function that returns a new result.

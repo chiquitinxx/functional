@@ -46,6 +46,18 @@ public class DirectResultTest extends ResultTest {
     }
 
     @Test
+    void checkedExceptionInMapOnFail() {
+        ThrowingSupplier throwingSupplier = () -> {
+            throw new RuntimeException("aaa");
+        };
+        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class)
+                .map(number -> {
+                    throw new RuntimeException("uuu");
+                }, RuntimeException.class);
+        assertTrue(result.failure().get().toString().contains("aaa"));
+    }
+
+    @Test
     void checkedExceptionInFlatMapOnFail() {
         ThrowingSupplier throwingSupplier = () -> {
             throw new RuntimeException("aaa");

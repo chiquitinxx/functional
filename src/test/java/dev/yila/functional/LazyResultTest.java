@@ -35,6 +35,17 @@ public class LazyResultTest extends ResultTest {
     }
 
     @Test
+    void unexpectedExceptionInCheckedMap() {
+        ThrowingFunction throwingFunction = (input) -> {
+            throw new RuntimeException();
+        };
+        ThrowableFailure failure = (ThrowableFailure) number(3)
+                .map(throwingFunction, NullPointerException.class)
+                .failure().get();
+        assertEquals("java.lang.RuntimeException", failure.getThrowable().getMessage());
+    }
+
+    @Test
     void unexpectedExceptionInCheckedFlatMap() {
         ThrowingFunction throwingFunction = (input) -> {
             throw new RuntimeException();

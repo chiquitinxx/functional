@@ -126,6 +126,17 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
+    public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+        Objects.requireNonNull(function);
+        Objects.requireNonNull(throwableClass);
+        if (hasFailure()) {
+            return DirectResult.failure(this.failure);
+        } else {
+            return createChecked(() -> function.apply(this.getOrThrow()), throwableClass);
+        }
+    }
+
+    @Override
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
         Objects.requireNonNull(function);
         if (hasFailure()) {

@@ -61,12 +61,31 @@ public abstract class ResultTest {
     }
 
     @Test
+    void mapWithCheckedException() {
+        ThrowingFunction<Integer, Integer, RuntimeException> function =
+                (input) -> input + 2;
+        Result<Integer> result = number(6)
+                .map(function, RuntimeException.class);
+        assertEquals(8, result.getOrThrow());
+    }
+
+    @Test
     void checkedExceptionInFlatMap() {
         ThrowingFunction throwingFunction = (input) -> {
             throw new RuntimeException("Fail");
         };
         Result<Integer> result = number(3)
                 .flatMap(throwingFunction, RuntimeException.class);
+        assertEquals("ThrowableFailure: java.lang.RuntimeException: Fail", result.failure().get().toString());
+    }
+
+    @Test
+    void checkedExceptionInMap() {
+        ThrowingFunction throwingFunction = (input) -> {
+            throw new RuntimeException("Fail");
+        };
+        Result<Integer> result = number(3)
+                .map(throwingFunction, RuntimeException.class);
         assertEquals("ThrowableFailure: java.lang.RuntimeException: Fail", result.failure().get().toString());
     }
 
