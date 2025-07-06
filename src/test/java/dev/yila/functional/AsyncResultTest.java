@@ -3,10 +3,12 @@ package dev.yila.functional;
 import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,7 +34,7 @@ public class AsyncResultTest extends ResultTest {
     }
 
     @Test
-    void time() {
+    void checkExecutionTimeToValidateExecutionInParallel() {
         Supplier<String> supplier = () -> {
             try { Thread.sleep(100); } catch (InterruptedException ignored) {}
             return "hello";
@@ -46,7 +48,79 @@ public class AsyncResultTest extends ResultTest {
                 .reduce("", String::concat), first, second, third);
 
         assertEquals("hellohellohello", sequence.getOrThrow());
-        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 200);
+        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 180);
+    }
+
+    @Test
+    void executeTwoTaskInParallel() {
+        Supplier<String> first = () -> "hello";
+        Supplier<String> second = () -> "world";
+
+        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second);
+
+        assertEquals("hello world!", result.getOrThrow());
+    }
+
+    @Test
+    void executeTwoTaskInParallelWithTimeOut() {
+        Supplier<String> first = () -> "hello";
+        Supplier<String> second = () -> "world";
+
+        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second, 1, TimeUnit.SECONDS);
+
+        assertEquals("hello world!", result.getOrThrow());
+    }
+
+    @Test
+    void exceptionIsControlledExecutingInParallel() {
+        Supplier<String> first = () -> "hello";
+        Supplier<String> second = () -> {
+            throw new RuntimeException("world is down");
+        };
+
+        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second);
+
+        assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
+    }
+
+    @Test
+    void exceptionInParallelWithTimeOut() {
+        Supplier<String> first = () -> "hello";
+        Supplier<String> second = () -> {
+            while (true) {}
+        };
+
+        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second,
+                200, TimeUnit.MILLISECONDS);
+
+        assertEquals("AsyncResult inParallel timeOut", result.failure().get().toThrowable().getCause().getMessage());
+    }
+
+    @Test
+    void validateExecutionInParallel() {
+        Supplier<String> supplier = () -> {
+            try { Thread.sleep(80); } catch (InterruptedException ignored) {}
+            return "world";
+        };
+        LocalDateTime before = LocalDateTime.now();
+        Result<String> result = AsyncResult.inParallel((f, s) -> f + s, supplier, supplier);
+
+        assertEquals("worldworld", result.getOrThrow());
+        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
+    }
+
+    @Test
+    void validateExecutionInParallelJoiningInParallelExecutions() {
+        Supplier<String> supplier = () -> {
+            try { Thread.sleep(80); } catch (InterruptedException ignored) {}
+            return "world";
+        };
+        LocalDateTime before = LocalDateTime.now();
+        Result<String> run = AsyncResult.inParallel((f, s) -> f + s, supplier, supplier);
+        Result<String> result = AsyncResult.inParallel((f, s) -> f + s, supplier, run::getOrThrow);
+
+        assertEquals("worldworldworld", result.getOrThrow());
+        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
     }
 
     @Override

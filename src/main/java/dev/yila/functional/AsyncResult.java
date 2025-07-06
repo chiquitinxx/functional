@@ -2,10 +2,13 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
 
+import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class AsyncResult <T> implements Result<T> {
 
@@ -22,6 +25,26 @@ public class AsyncResult <T> implements Result<T> {
 
     public static <T> AsyncResult<T> create(CompletableFuture<T> future) {
         return new AsyncResult<>(future);
+    }
+
+    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second) {
+        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first);
+        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second);
+        return new AsyncResult<>(cfFirst.thenCombine(cfSecond, joinFunction));
+    }
+
+    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
+        CompletableFuture timeoutFuture = new CompletableFuture<>();
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+        scheduler.schedule(() -> {
+            timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
+        }, timeOut, timeUnit);
+        timeoutFuture.whenComplete((result, throwable) -> scheduler.shutdown());
+
+        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first).applyToEither(timeoutFuture, Function.identity());
+        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second).applyToEither(timeoutFuture, Function.identity());
+        return new AsyncResult<>(cfFirst.thenCombine(cfSecond, joinFunction));
     }
 
     @Override
