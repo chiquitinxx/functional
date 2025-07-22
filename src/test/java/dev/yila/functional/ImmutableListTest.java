@@ -4,9 +4,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -68,5 +72,37 @@ public class ImmutableListTest {
         assertEquals(1, ImmutableList.create("hello").size());
         assertEquals(2, ImmutableList.create("hello", "world").size());
         assertEquals(1, ImmutableList.create("hello", "world").tail().getOrThrow().size());
+    }
+
+    @Test
+    public void isThreadSafe() throws InterruptedException {
+        List<Integer> sourceList = new ArrayList<>();
+        IntStream.range(0, 1000000).forEach(sourceList::add);
+        ImmutableList<Integer> immutableList = ImmutableList.from(sourceList);
+
+        int numberOfThreads = 300;
+        ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
+        CountDownLatch latch = new CountDownLatch(1);
+        Map<Integer, Result<ImmutableList<Integer>>> results = new ConcurrentHashMap<>();
+
+        for (int i = 0; i < numberOfThreads; i++) {
+            service.submit(() -> {
+                try {
+                    latch.await();
+                    Result<ImmutableList<Integer>> tail = immutableList.tail();
+                    results.put(System.identityHashCode(tail.getOrThrow()), tail);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+
+        latch.countDown();
+        service.shutdown();
+        service.awaitTermination(1, TimeUnit.MINUTES);
+
+        assertEquals(numberOfThreads, results.size(), "Multiple different tail objects were created, indicating a race condition.");
+        assertEquals(numberOfThreads,
+                results.values().stream().filter(r -> r.getOrThrow().head().equals(1)).count());
     }
 }

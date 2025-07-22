@@ -30,7 +30,7 @@ public class ImmutableList<T> {
     }
 
     public static <T> ImmutableList<T> from(List<T> list) {
-        if (list == null || list.size() == 0) {
+        if (list == null || list.isEmpty()) {
             throw new IllegalArgumentException("List must contains at least 1 element.");
         }
         for (T t : list) {
@@ -46,7 +46,7 @@ public class ImmutableList<T> {
         private final T current;
         private final T[] all;
         private Elements<T> nextElements;
-        private int position;
+        private final int position;
 
         Elements(T[] all) {
             this.all = all;
@@ -64,7 +64,7 @@ public class ImmutableList<T> {
             return this.current;
         }
 
-        Elements<T> next() {
+        synchronized Elements<T> next() {
             if (nextElements == null) {
                 if (all.length - position == 1) {
                     return null;
