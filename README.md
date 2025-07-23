@@ -49,10 +49,6 @@ Result<String> finalResult = success
     .map(value -> value * 2) // Returns Result.ok(200)
     .flatMap(value -> DirectResult.ok("Final value: " + value));
 
-// Handling outcomes
-finalResult.onSuccess(System.out::println); // Prints "Final value: 200"
-finalResult.onFailure(fail -> System.err.println(fail.toOptionalString()));
-
 // Getting the value
 String resultString = finalResult.getOrThrow(); // "Final value: 200"
 Integer errorCase = failure.orElse(f -> -1);    // -1
@@ -88,11 +84,10 @@ Agent<Integer> counter = Agent.create(0);
 // Send functions to update the value asynchronously and thread-safely
 // For example, in a multi-threaded environment:
 for (int i = 0; i < 1000; i++) {
-    counter.send(value -> value + 1);
+    Agent.update(counter, value -> value + 1);
 }
 
-// To get the value, you must send a function that returns it
-Integer finalCount = counter.get(value -> value).getOrThrow(); // 1000
+Integer finalCount = Agent.get(counter); // 1000
 ```
 
 ### `ImmutableList<T>`
@@ -114,11 +109,6 @@ Result<ImmutableList<Integer>> tailResult = list.tail();
 tailResult.onSuccess(tail -> {
     System.out.println(tail.head()); // 2
     System.out.println(tail.toString()); // "[2, 3, 4]"
-});
-
-// An empty tail returns a failure
-ImmutableList.create(1).tail().onFailure(f -> {
-    System.out.println("No tail exists!");
 });
 ```
 
