@@ -170,7 +170,7 @@ public abstract class ResultTest {
     }
 
     @Test
-    void flatMapFunction() {
+    void flatMapFun() {
         Fun<String, String> upper = Fun.from(String::toUpperCase);
 
         Result<String> toUpper = string("hello").flatMap(upper);
@@ -179,7 +179,7 @@ public abstract class ResultTest {
     }
 
     @Test
-    void flatMapFunctionAfterFailure() {
+    void flatMapFunAfterFailure() {
         Fun<Integer, Integer> upper = Fun.from(n -> n * 2);
 
         Result<Integer> twoTimes = failure(Failure.create("error")).flatMap(upper);
@@ -188,7 +188,7 @@ public abstract class ResultTest {
     }
 
     @Test
-    void flatMapFunctionFailure() {
+    void flatMapFunFailure() {
         ThrowingFunction<String, String, NullPointerException> function = s -> {
             throw new NullPointerException("null");
         };
