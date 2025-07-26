@@ -3,7 +3,6 @@ package dev.yila.functional;
 import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;

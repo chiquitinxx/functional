@@ -3,6 +3,11 @@ package dev.yila.functional;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * A function with one argument.
+ * @param <I> input
+ * @param <O> output
+ */
 public class Fun<I, O> {
 
     private final Function<I, O> function;

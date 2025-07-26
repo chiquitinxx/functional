@@ -54,6 +54,36 @@ String resultString = finalResult.getOrThrow(); // "Final value: 200"
 Integer errorCase = failure.orElse(f -> -1);    // -1
 ```
 
+### `Fun<Input, Output>` and `Fun2<Input1, Input2, Output>`
+
+*   **Fun**: A functional interface representing a function that takes one argument and returns a result.
+*   **Fun2**: A functional interface similar to `Fun`, but representing a function that takes two arguments and returns a result.
+
+**Usage:**
+
+```java
+// Fun example: squaring a number
+Fun<Integer, Integer> square = i -> i * i;
+Result<Integer> result = square.apply(2);
+System.out.println(result.getOrThrow()); // 4
+
+// Fun2 example: adding two numbers
+Fun2<Integer, Integer, Integer> add = (a, b) -> a + b;
+Result<Integer> sumResult = add.apply(3, 5);
+System.out.println(sumResult.getOrThrow()); // 8
+
+// Fun example: composition
+Fun<Integer, Integer> twoTimes = Fun.from(a -> 2 * a);
+Fun<Integer, Integer> threeTimes = Fun.from(a -> 3 * a);
+Fun<Integer, Integer> sixTimes = Fun.compose(twoTimes, threeTimes);
+System.out.println(sixTimes.apply(5).getOrThrow()); //30
+
+// Fun2 example: curry
+Fun2<Integer, Integer, Integer> sum = Fun2.from(Integer::sum);
+Fun<Integer, Integer> plus10 = sum.curry(10);
+System.out.println(plus10.apply(2).getOrThrow()); //12
+```
+
 ### `Matcher<I, O>`
 
 A simple yet powerful pattern matcher that evaluates an input value against a series of conditions (`when`) and returns an output value.

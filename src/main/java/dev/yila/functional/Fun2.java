@@ -3,6 +3,12 @@ package dev.yila.functional;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
+/**
+ * A function with two input arguments.
+ * @param <I1> input 1
+ * @param <I2> input 2
+ * @param <O> output
+ */
 public class Fun2<I1, I2, O> {
 
     private final BiFunction<I1, I2, O> function;

@@ -9,15 +9,15 @@ public class FunTest {
 
     @Test
     public void createFunction() {
-        Fun<Integer, Integer> twoTimes = Fun.from((a) -> 2 * a);
+        Fun<Integer, Integer> twoTimes = Fun.from(a -> 2 * a);
 
         assertEquals(20, twoTimes.apply(10).getOrThrow());
     }
 
     @Test
     public void composeFunctions() {
-        Fun<Integer, Integer> twoTimes = Fun.from((a) -> 2 * a);
-        Fun<Integer, Integer> threeTimes = Fun.from((a) -> 3 * a);
+        Fun<Integer, Integer> twoTimes = Fun.from(a -> 2 * a);
+        Fun<Integer, Integer> threeTimes = Fun.from(a -> 3 * a);
 
         Fun<Integer, Integer> sixTimes = Fun.compose(twoTimes, threeTimes);
         assertEquals(30, sixTimes.apply(5).getOrThrow());
@@ -48,6 +48,6 @@ public class FunTest {
         };
         Fun<String, String> upper = Fun.from(function, NullPointerException.class);
 
-        assertThrows(RuntimeException.class, () -> upper.apply("tt"));
+        assertThrows(RuntimeException.class, () -> upper.apply("tt"), "yup");
     }
 }
