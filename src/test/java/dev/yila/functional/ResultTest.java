@@ -169,6 +169,36 @@ public abstract class ResultTest {
         assertEquals("hello", result.getOrThrow());
     }
 
+    @Test
+    void flatMapFunction() {
+        Fun<String, String> upper = Fun.from(String::toUpperCase);
+
+        Result<String> toUpper = string("hello").flatMap(upper);
+
+        assertEquals("HELLO", toUpper.getOrThrow());
+    }
+
+    @Test
+    void flatMapFunctionAfterFailure() {
+        Fun<Integer, Integer> upper = Fun.from(n -> n * 2);
+
+        Result<Integer> twoTimes = failure(Failure.create("error")).flatMap(upper);
+
+        assertTrue(twoTimes.hasFailure());
+    }
+
+    @Test
+    void flatMapFunctionFailure() {
+        ThrowingFunction<String, String, NullPointerException> function = s -> {
+            throw new NullPointerException("null");
+        };
+        Fun<String, String> upper = Fun.from(function, NullPointerException.class);
+
+        Result<String> result = string("hello").flatMap(upper);
+
+        assertTrue(result.hasFailure());
+    }
+
     static class SimpleFailure implements Failure {}
 
     abstract Result<Integer> number(Integer integer);

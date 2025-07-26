@@ -83,6 +83,11 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     @Override
+    public <R> Result<R> flatMap(Fun<T, R> fun) {
+        return getResult().flatMap(fun);
+    }
+
+    @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         return getResult().flatMap(function, throwableClass);
     }

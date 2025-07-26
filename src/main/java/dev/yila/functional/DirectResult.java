@@ -147,6 +147,16 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
+    public <R> Result<R> flatMap(Fun<T, R> fun) {
+        Objects.requireNonNull(fun);
+        if (hasFailure()) {
+            return DirectResult.failure(this.failure);
+        } else {
+            return fun.apply(this.value);
+        }
+    }
+
+    @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);

@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -191,9 +192,10 @@ public class LazyResultTest extends ResultTest {
         Result<Integer> stringLength = hello
                 .flatMap(s -> LazyResult.create(s::toUpperCase))
                 .map(String::toLowerCase)
+                .flatMap(Fun.from(s -> s + "yo"))
                 .flatMap(s -> LazyResult.create(s::length))
                 .map(size -> size * size);
-        assertEquals(25, stringLength.getOrThrow());
+        assertEquals(49, stringLength.getOrThrow());
     }
 
     @Test
@@ -201,7 +203,8 @@ public class LazyResultTest extends ResultTest {
         assertThrows(IllegalArgumentException.class, () -> LazyResult.create(null));
         Result<String> hello = LazyResult.create(() -> ("hello"));
         assertThrows(IllegalArgumentException.class, () -> hello.map(null));
-        assertThrows(NullPointerException.class, () -> hello.flatMap(null));
+        assertThrows(NullPointerException.class, () -> hello.flatMap((Function)null));
+        assertThrows(NullPointerException.class, () -> hello.flatMap((Fun)null));
     }
 
     @Test

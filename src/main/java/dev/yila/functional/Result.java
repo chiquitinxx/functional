@@ -71,6 +71,14 @@ public interface Result<T> {
     <R> Result<R> flatMap(Function<T, Result<R>> function);
 
     /**
+     * Flatten map current result with a Fun that returns a new result.
+     * @param fun will be executed if current result is success.
+     * @return
+     * @param <R>
+     */
+    <R> Result<R> flatMap(Fun<T, R> fun);
+
+    /**
      * Flatten map current result with a throwing function that returns a new result.
      * @param function
      * @param throwableClass

@@ -93,6 +93,18 @@ public class LazyResult<T> implements Result<T> {
     }
 
     @Override
+    public <V> Result<V> flatMap(Fun<T, V> fun) {
+        Objects.requireNonNull(fun);
+        return new LazyResult<>(() -> {
+            Result<V> value = fun.apply(this.supplier.get());
+            if (value.hasFailure()) {
+                throw new LazyResultException(value.failure().get());
+            }
+            return value.getOrThrow();
+        });
+    }
+
+    @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);
