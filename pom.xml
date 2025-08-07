@@ -60,6 +60,7 @@
     <maven.release.plugin>2.5.3</maven.release.plugin>
     <maven.jacoco.plugin>0.8.8</maven.jacoco.plugin>
     <maven.coveralls.plugin>4.5.0-M3</maven.coveralls.plugin>
+    <maven.license.plugin>4.6</maven.license.plugin>
   </properties>
 
   <dependencies>
@@ -167,6 +168,31 @@
         <configuration>
           <repoToken>1mthLoeXmm3UYzuymy0m6rLkWbVq0K8HN</repoToken>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>${maven.license.plugin}</version>
+        <configuration>
+          <licenseSets>
+            <licenseSet>
+              <header>LICENSE.txt</header>
+              <excludes>
+                <include>**/*.java</include>
+                <exclude>pom.xml</exclude>
+                <exclude>README.md</exclude>
+                <exclude>**/target/**</exclude>
+              </excludes>
+            </licenseSet>
+          </licenseSets>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
