@@ -14,6 +14,20 @@ public class AsyncResult <T> implements Result<T> {
 
     private final CompletableFuture<DirectResult<T>> completableFuture;
 
+    private AsyncResult(CompletableFuture<T> future, Class<? extends Throwable> throwableClass) {
+        this.completableFuture = future.handleAsync((result, throwable) -> {
+            if (throwable != null) {
+                Throwable cause = throwable.getCause().getCause();
+                if (throwableClass.isAssignableFrom(cause.getClass())) {
+                    return DirectResult.failure(cause);
+                } else {
+                    throw new RuntimeException(cause);
+                }
+            }
+            return DirectResult.ok(result);
+        });
+    }
+
     private AsyncResult(CompletableFuture<T> future) {
         this.completableFuture = future.handleAsync((result, throwable) -> {
             if (throwable != null) {
@@ -25,6 +39,16 @@ public class AsyncResult <T> implements Result<T> {
 
     public static <T> AsyncResult<T> create(CompletableFuture<T> future) {
         return new AsyncResult<>(future);
+    }
+
+    public static <T, K extends Throwable> AsyncResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
+        return new AsyncResult<>(CompletableFuture.supplyAsync(() -> {
+            try {
+                return throwingSupplier.get();
+            } catch (Throwable t) {
+                throw new RuntimeException(t);
+            }
+        }), throwableClass);
     }
 
     public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second) {

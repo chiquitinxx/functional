@@ -24,9 +24,8 @@ public class LazyResult<T> implements Result<T> {
      * @param supplier
      * @return
      * @param <V>
-     * @param <F>
      */
-    public static <V, F extends Failure> LazyResult<V> create(Supplier<V> supplier) {
+    public static <V> LazyResult<V> create(Supplier<V> supplier) {
         if (supplier == null) {
             throw new IllegalArgumentException("null is not a valid supplier to create LazyResult");
         }

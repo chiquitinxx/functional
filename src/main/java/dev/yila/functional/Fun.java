@@ -30,11 +30,11 @@ public class Fun<I, O> {
     }
 
     public static <Input,Output> Fun<Input, Output> from(Function<Input, Output> function) {
-        return new Fun(function);
+        return new Fun<>(function);
     }
 
     public static <Input,Output, Ex extends Throwable> Fun<Input, Output> from(ThrowingFunction<Input, Output, Ex> function, Class<Ex> throwableClass) {
-        return new Fun(function, throwableClass);
+        return new Fun<>(function, throwableClass);
     }
 
     public static <Input,Middle,Output> Fun<Input, Output> compose(Fun<Input, Middle> first, Fun<Middle, Output> second) {

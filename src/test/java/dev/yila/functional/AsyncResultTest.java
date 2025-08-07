@@ -122,6 +122,37 @@ public class AsyncResultTest extends ResultTest {
         assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
     }
 
+    @Test
+    void createCheckedAsync() {
+        ThrowingSupplier<String, TestException> supplier = () -> "hello";
+        Result<String> result = AsyncResult.createChecked(supplier, TestException.class);
+
+        assertEquals("hello", result.getOrThrow());
+    }
+
+    @Test
+    void checkedAsyncThrowingExpectedException() {
+        ThrowingSupplier<String, TestException> supplier = () -> {
+            throw new TestException();
+        };
+        Result<String> result = AsyncResult.createChecked(supplier, TestException.class);
+
+        assertEquals(TestException.class, result.failure().get().toThrowable().getClass());
+    }
+
+    @Test
+    void checkedAsyncThrowingUnExpectedException() {
+        ThrowingSupplier<String, TestException> supplier = () -> {
+            throw new RuntimeException("hey");
+        };
+
+        assertThrows(RuntimeException.class, () -> {
+            AsyncResult.createChecked(supplier, TestException.class).getOrThrow();
+        }, "hey");
+    }
+
+    static class TestException extends Exception {}
+
     @Override
     Result<Integer> number(Integer integer) {
         return AsyncResult.create(CompletableFuture.completedFuture(integer));
