@@ -54,31 +54,48 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     public static <T, K extends Throwable> AsyncResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
+        return createChecked(throwingSupplier, throwableClass, ForkJoinPool.commonPool());
+    }
+
+    public static <T, K extends Throwable> AsyncResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass, Executor executor) {
         return new AsyncResult<>(CompletableFuture.supplyAsync(() -> {
             try {
                 return throwingSupplier.get();
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }
-        }), throwableClass);
+        }, executor), throwableClass);
     }
 
+    /**
+     * Execute two tasks in parallel
+     * Default timeout is 30 seconds
+     * @param joinFunction
+     * @param first
+     * @param second
+     * @return
+     * @param <T>
+     * @param <F>
+     * @param <S>
+     */
     public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second) {
-        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first);
-        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second);
-        return new AsyncResult<>(cfFirst.thenCombine(cfSecond, joinFunction));
+        return inParallel(joinFunction, first, second, 30, TimeUnit.SECONDS);
     }
 
     public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
+        return inParallel(joinFunction, first, second, timeOut, timeUnit, ForkJoinPool.commonPool());
+    }
+
+    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit, Executor executor) {
         CompletableFuture timeoutFuture = new CompletableFuture<>();
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.schedule(() -> {
             timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
         }, timeOut, timeUnit);
 
-        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first)
+        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first, executor)
                 .applyToEither(timeoutFuture, Function.identity());
-        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second)
+        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second, executor)
                 .applyToEither(timeoutFuture, Function.identity());
         CompletableFuture result = cfFirst.thenCombine(cfSecond, joinFunction);
         result.whenComplete((r, ex) -> {
