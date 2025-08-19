@@ -118,7 +118,7 @@ public class DirectResultTest extends ResultTest {
     @Test
     void canNotCreateEmptyResults() {
         assertThrows(IllegalArgumentException.class, () -> number(null));
-        assertThrows(IllegalArgumentException.class, () -> failure((Throwable) null));
+        assertThrows(IllegalArgumentException.class, () -> failure((Throwable) null, Throwable.class));
         assertThrows(IllegalArgumentException.class, () -> failure((Failure) null));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failures(null));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failures(Collections.emptyList()));
@@ -154,7 +154,7 @@ public class DirectResultTest extends ResultTest {
     }
 
     @Override
-    Result<Integer> failure(Throwable throwable) {
+    <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz) {
         return DirectResult.failure(throwable);
     }
 }

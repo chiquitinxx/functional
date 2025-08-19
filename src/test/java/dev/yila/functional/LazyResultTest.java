@@ -268,7 +268,7 @@ public class LazyResultTest extends ResultTest {
     }
 
     @Override
-    Result<Integer> failure(Throwable throwable) {
+    <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz) {
         return DirectResult.failure(throwable);
     }
 }

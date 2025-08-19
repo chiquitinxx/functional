@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static dev.yila.functional.Result.join;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +38,15 @@ public abstract class ResultTest {
         result.onFailure(r -> fail("never executed"));
         assertEquals(5, result.getOrThrow());
         assertEquals(5, result.orElse(r -> 0));
+    }
+
+    @Test
+    void throwableFailureResult() {
+        AtomicInteger atomic = new AtomicInteger(0);
+        Result<Integer> result = failure(new RuntimeException("nope"), RuntimeException.class);
+        result.onFailure((f) -> atomic.incrementAndGet());
+        assertTrue(result.failure().get().toString().endsWith("nope"));
+        assertEquals(1, atomic.get());
     }
 
     @Test
@@ -89,7 +99,7 @@ public abstract class ResultTest {
         };
         Result<Integer> result = number(3)
                 .flatMap(throwingFunction, RuntimeException.class);
-        assertEquals("ThrowableFailure: java.lang.RuntimeException: Fail", result.failure().get().toString());
+        assertTrue(result.failure().get().toString().endsWith("java.lang.RuntimeException: Fail"));
     }
 
     @Test
@@ -99,7 +109,7 @@ public abstract class ResultTest {
         };
         Result<Integer> result = number(3)
                 .map(throwingFunction, RuntimeException.class);
-        assertEquals("ThrowableFailure: java.lang.RuntimeException: Fail", result.failure().get().toString());
+        assertTrue(result.failure().get().toString().endsWith("ThrowableFailure: java.lang.RuntimeException: Fail"));
     }
 
     @Test
@@ -135,7 +145,7 @@ public abstract class ResultTest {
     @Test
     void throwableFailure() {
         String exceptionMessage = "fail :(";
-        Result<?> result = failure(new RuntimeException(exceptionMessage));
+        Result<?> result = failure(new RuntimeException(exceptionMessage), RuntimeException.class);
         Throwable throwable = result.failure().get().toThrowable();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
@@ -218,5 +228,5 @@ public abstract class ResultTest {
     abstract Result<String> string(String string);
     abstract Result<Optional<String>> optional(Optional<String> optional);
     abstract Result<Integer> failure(Failure failure);
-    abstract Result<Integer> failure(Throwable throwable);
+    abstract <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz);
 }

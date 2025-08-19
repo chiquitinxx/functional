@@ -21,6 +21,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static org.awaitility.Awaitility.await;
@@ -172,9 +173,12 @@ public class AsyncResultTest extends ResultTest {
             throw new RuntimeException("hey");
         };
 
-        assertThrows(RuntimeException.class, () -> {
-            AsyncResult.createChecked(supplier, TestException.class).getOrThrow();
-        }, "hey");
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        AsyncResult<String> result = AsyncResult.createChecked(supplier, TestException.class);
+        result.onFailure(f -> atomicInteger.incrementAndGet());
+
+        assertThrows(RuntimeException.class, result::getOrThrow, "hey");
+        assertEquals(1, atomicInteger.get());
     }
 
     static class TestException extends Exception {}
@@ -200,7 +204,10 @@ public class AsyncResultTest extends ResultTest {
     }
 
     @Override
-    Result<Integer> failure(Throwable throwable) {
-        return DirectResult.failure(throwable);
+    <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz) {
+        ThrowingSupplier<Integer, E> supplier = () -> {
+            throw throwable;
+        };
+        return AsyncResult.createChecked(supplier, clazz);
     }
 }

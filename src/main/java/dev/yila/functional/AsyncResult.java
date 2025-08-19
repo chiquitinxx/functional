@@ -131,37 +131,55 @@ public class AsyncResult <T> implements Result<T> {
 
     @Override
     public <R> Result<R> map(Function<T, R> function) {
-        return getResult().map(function);
+        CompletableFuture<R> cf = this.completableFuture
+                .thenApply(dr -> dr.map(function).getOrThrow());
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
-        return getResult().map(function, throwableClass);
+        CompletableFuture<R> cf = this.completableFuture
+                .thenApply(dr -> dr.map(function, throwableClass).getOrThrow());
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
-        return getResult().flatMap(function);
+        CompletableFuture<R> cf = this.completableFuture
+                .thenApply(dr -> dr.flatMap(function).getOrThrow());
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R> Result<R> flatMap(Fun<T, R> fun) {
-        return getResult().flatMap(fun);
+        CompletableFuture<R> cf = this.completableFuture
+                .thenApply(dr -> dr.flatMap(fun).getOrThrow());
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
-        return getResult().flatMap(function, throwableClass);
+        CompletableFuture<R> cf = this.completableFuture
+                .thenApply(dr -> dr.map(function, throwableClass).getOrThrow());
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public Result<T> onSuccess(Consumer<T> consumer) {
-        return getResult().onSuccess(consumer);
+        this.completableFuture.thenAccept(directResult -> directResult.onSuccess(consumer));
+        return this;
     }
 
     @Override
     public Result<T> onFailure(Consumer<Failure> consumer) {
-        return getResult().onFailure(consumer);
+        this.completableFuture.whenComplete((dr, t) -> {
+            if (t != null) {
+                consumer.accept(Failure.create(t));
+            } else {
+                dr.failure().ifPresent(consumer::accept);
+            }
+        });
+        return this;
     }
 
     @Override
