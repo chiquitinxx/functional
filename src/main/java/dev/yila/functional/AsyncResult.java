@@ -71,16 +71,25 @@ public class AsyncResult <T> implements Result<T> {
 
     public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
         CompletableFuture timeoutFuture = new CompletableFuture<>();
-
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.schedule(() -> {
             timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
         }, timeOut, timeUnit);
-        timeoutFuture.whenComplete((result, throwable) -> scheduler.shutdown());
 
-        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first).applyToEither(timeoutFuture, Function.identity());
-        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second).applyToEither(timeoutFuture, Function.identity());
-        return new AsyncResult<>(cfFirst.thenCombine(cfSecond, joinFunction));
+        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first)
+                .applyToEither(timeoutFuture, Function.identity());
+        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second)
+                .applyToEither(timeoutFuture, Function.identity());
+        CompletableFuture result = cfFirst.thenCombine(cfSecond, joinFunction);
+        result.whenComplete((r, ex) -> {
+            timeoutFuture.cancel(false);
+            scheduler.shutdown();
+            if (ex != null) {
+                result.completeExceptionally((Throwable) ex);
+            }
+            result.complete(r);
+        });
+        return new AsyncResult<>(result);
     }
 
     @Override

@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AsyncResultTest extends ResultTest {
@@ -87,6 +88,18 @@ public class AsyncResultTest extends ResultTest {
     void exceptionIsControlledExecutingInParallel() {
         Supplier<String> first = () -> "hello";
         Supplier<String> second = () -> {
+            throw new RuntimeException("world is down");
+        };
+
+        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second);
+
+        assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
+    }
+
+    @Test
+    void exceptionIsControlledExecutingInParallelAtFirst() {
+        Supplier<String> second = () -> "hello";
+        Supplier<String> first = () -> {
             throw new RuntimeException("world is down");
         };
 
