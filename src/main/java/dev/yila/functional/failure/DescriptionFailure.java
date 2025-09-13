@@ -13,6 +13,8 @@
  */
 package dev.yila.functional.failure;
 
+import java.util.Objects;
+
 public class DescriptionFailure implements Failure {
 
     public static DescriptionFailure create(String description) {
@@ -22,6 +24,7 @@ public class DescriptionFailure implements Failure {
     private final String description;
 
     DescriptionFailure(String description) {
+        Objects.requireNonNull(description);
         this.description = description;
     }
 

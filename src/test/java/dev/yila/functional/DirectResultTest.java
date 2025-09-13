@@ -13,10 +13,7 @@
  */
 package dev.yila.functional;
 
-import dev.yila.functional.failure.Failure;
-import dev.yila.functional.failure.CodeDescriptionFailure;
-import dev.yila.functional.failure.MultipleFailures;
-import dev.yila.functional.failure.ThrowableFailure;
+import dev.yila.functional.failure.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -120,8 +117,18 @@ public class DirectResultTest extends ResultTest {
         assertThrows(IllegalArgumentException.class, () -> number(null));
         assertThrows(IllegalArgumentException.class, () -> failure((Throwable) null, Throwable.class));
         assertThrows(IllegalArgumentException.class, () -> failure((Failure) null));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.failure((String) null));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.failure(""));
+        assertThrows(IllegalArgumentException.class, () -> DirectResult.failure("    "));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failures(null));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failures(Collections.emptyList()));
+    }
+
+    @Test
+    void createFailureFromMessage() {
+        Result result = DirectResult.failure("error message");
+        DescriptionFailure failure = (DescriptionFailure) result.failure().get();
+        assertEquals("error message", failure.toString());
     }
 
     static class TestException extends Exception {}

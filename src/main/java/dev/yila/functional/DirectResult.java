@@ -54,6 +54,19 @@ public class DirectResult<T> implements Result<T> {
     }
 
     /**
+     * Create a new failure result.
+     * @param message
+     * @return
+     * @param <T>
+     */
+    public static <T> DirectResult<T> failure(String message) {
+        if (message == null || message.trim().isEmpty()) {
+            throw new IllegalArgumentException("Message can not be empty.");
+        }
+        return new DirectResult<>(null, Failure.create(message));
+    }
+
+    /**
      * Create a new failure result from a throwable.
      * @param throwable
      * @return
