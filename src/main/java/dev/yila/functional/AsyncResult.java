@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 
 public class AsyncResult <T> implements Result<T> {
 
-    private final CompletableFuture<DirectResult<T>> completableFuture;
+    private final CompletableFuture<Result<T>> completableFuture;
 
     private AsyncResult(CompletableFuture<T> future, Class<? extends Throwable> throwableClass) {
         this.completableFuture = future.handleAsync((result, throwable) -> {
@@ -46,6 +46,15 @@ public class AsyncResult <T> implements Result<T> {
                 return DirectResult.failure(throwable);
             }
             return DirectResult.ok(result);
+        });
+    }
+
+    private AsyncResult(CompletableFuture<Result<T>> future, int _number) {
+        this.completableFuture = future.handleAsync((result, throwable) -> {
+            if (throwable != null) {
+                return DirectResult.failure(throwable);
+            }
+            return result;
         });
     }
 
@@ -131,52 +140,52 @@ public class AsyncResult <T> implements Result<T> {
 
     @Override
     public <R> Result<R> map(Function<T, R> function) {
-        CompletableFuture<R> cf = this.completableFuture
-                .thenApply(dr -> dr.map(function).getOrThrow());
-        return new AsyncResult<>(cf);
+        CompletableFuture<Result<R>> cf = this.completableFuture
+                .thenApply(r -> r.map(function));
+        return new AsyncResult<>(cf, 0);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
-        CompletableFuture<R> cf = this.completableFuture
-                .thenApply(dr -> dr.map(function, throwableClass).getOrThrow());
-        return new AsyncResult<>(cf);
+        CompletableFuture<Result<R>> cf = this.completableFuture
+                .thenApply(r -> r.map(function, throwableClass));
+        return new AsyncResult<>(cf, 0);
     }
 
     @Override
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
-        CompletableFuture<R> cf = this.completableFuture
-                .thenApply(dr -> dr.flatMap(function).getOrThrow());
-        return new AsyncResult<>(cf);
+        CompletableFuture<Result<R>> cf = this.completableFuture
+                .thenApply(r -> r.flatMap(function));
+        return new AsyncResult<>(cf, 0);
     }
 
     @Override
     public <R> Result<R> flatMap(Fun<T, R> fun) {
-        CompletableFuture<R> cf = this.completableFuture
-                .thenApply(dr -> dr.flatMap(fun).getOrThrow());
-        return new AsyncResult<>(cf);
+        CompletableFuture<Result<R>> cf = this.completableFuture
+                .thenApply(r -> r.flatMap(fun));
+        return new AsyncResult<>(cf, 0);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
-        CompletableFuture<R> cf = this.completableFuture
-                .thenApply(dr -> dr.map(function, throwableClass).getOrThrow());
-        return new AsyncResult<>(cf);
+        CompletableFuture<Result<R>> cf = this.completableFuture
+                .thenApply(r -> r.map(function, throwableClass));
+        return new AsyncResult<>(cf, 0);
     }
 
     @Override
     public Result<T> onSuccess(Consumer<T> consumer) {
-        this.completableFuture.thenAccept(directResult -> directResult.onSuccess(consumer));
+        this.completableFuture.thenAccept(result -> result.onSuccess(consumer));
         return this;
     }
 
     @Override
     public Result<T> onFailure(Consumer<Failure> consumer) {
-        this.completableFuture.whenComplete((dr, t) -> {
+        this.completableFuture.whenComplete((r, t) -> {
             if (t != null) {
                 consumer.accept(Failure.create(t));
             } else {
-                dr.failure().ifPresent(consumer::accept);
+                r.failure().ifPresent(consumer::accept);
             }
         });
         return this;
