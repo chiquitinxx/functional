@@ -18,8 +18,6 @@ import dev.yila.functional.failure.MultipleFailures;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CompletableFuture;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MixResultTest {
@@ -27,7 +25,7 @@ public class MixResultTest {
     @RepeatedTest(10)
     public void sequenceAll() {
         Result<String> direct = DirectResult.ok("direct");
-        Result<String> async = AsyncResult.create(CompletableFuture.completedFuture("async"));
+        Result<String> async = AsyncResult.create(() -> "async");
         Result<String> lazy = LazyResult.create(() -> "lazy");
 
         Result<String> result = Result.sequence(list -> {

@@ -3,8 +3,6 @@ package dev.yila.functional;
 import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CompletableFuture;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,7 +11,7 @@ public class AsyncResultFailuresTest {
     @Test
     void mapShouldPreserveFailure() {
         Failure originalFailure = Failure.create("Original Failure");
-        Result<String> failedResult = AsyncResult.create(CompletableFuture.completedFuture("success"))
+        Result<String> failedResult = AsyncResult.create(() -> "success")
                 .flatMap(s -> DirectResult.failure(originalFailure));
 
         assertTrue(failedResult.hasFailure(), "Should have failure");
@@ -27,7 +25,7 @@ public class AsyncResultFailuresTest {
 
     @Test
     void exceptionAfterMapReturnsFailure() {
-        Result<String> failedResult = AsyncResult.create(CompletableFuture.completedFuture("success"))
+        Result<String> failedResult = AsyncResult.create(() -> "success")
                 .flatMap(s -> {throw new RuntimeException("yup");});
 
         assertTrue(failedResult.hasFailure(), "Should have failure");

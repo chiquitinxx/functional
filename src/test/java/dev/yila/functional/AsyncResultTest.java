@@ -19,12 +19,10 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AsyncResultTest extends ResultTest {
@@ -32,16 +30,16 @@ public class AsyncResultTest extends ResultTest {
     private final RuntimeException runtimeException = new RuntimeException("exception");
 
     @Test
-    void createAsyncResultFromFuture() {
-        AsyncResult<Integer> result = AsyncResult.create(CompletableFuture.completedFuture(5));
+    void createAsyncResultFromSupplier() {
+        AsyncResult<Integer> result = AsyncResult.create(() -> 5);
         assertEquals(5, result.getOrThrow());
     }
 
     @Test
     void asyncFailedWithRuntimeException() {
-        CompletableFuture<String> completableFuture = new CompletableFuture<>();
-        AsyncResult<String> result = AsyncResult.create(completableFuture);
-        completableFuture.completeExceptionally(runtimeException);
+        AsyncResult<String> result = AsyncResult.create(() -> {
+            throw runtimeException;
+        });
         assertTrue(result.hasFailure());
         Failure failure = result.failure().get();
         assertEquals(runtimeException, failure.toThrowable());
@@ -54,9 +52,9 @@ public class AsyncResultTest extends ResultTest {
             return "hello";
         };
         LocalDateTime before = LocalDateTime.now();
-        Result<String> first = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
-        Result<String> second = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
-        Result<String> third = AsyncResult.create(CompletableFuture.supplyAsync(supplier));
+        Result<String> first = AsyncResult.create(supplier);
+        Result<String> second = AsyncResult.create(supplier);
+        Result<String> third = AsyncResult.create(supplier);
 
         Result<String> sequence = Result.sequence((list) -> list.stream()
                 .reduce("", String::concat), first, second, third);
@@ -70,7 +68,7 @@ public class AsyncResultTest extends ResultTest {
         Supplier<String> first = () -> "hello";
         Supplier<String> second = () -> "world";
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second);
+        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
         assertEquals("hello world!", result.getOrThrow());
     }
@@ -80,7 +78,7 @@ public class AsyncResultTest extends ResultTest {
         Supplier<String> first = () -> "hello";
         Supplier<String> second = () -> "world";
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second, 1, TimeUnit.SECONDS);
+        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second, 1, TimeUnit.SECONDS);
 
         assertEquals("hello world!", result.getOrThrow());
     }
@@ -92,7 +90,7 @@ public class AsyncResultTest extends ResultTest {
             throw new RuntimeException("world is down");
         };
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second);
+        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
         assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
     }
@@ -104,7 +102,7 @@ public class AsyncResultTest extends ResultTest {
             throw new RuntimeException("world is down");
         };
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second);
+        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
         assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
     }
@@ -116,7 +114,7 @@ public class AsyncResultTest extends ResultTest {
             while (true) {}
         };
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> f + " " + s + "!", first, second,
+        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second,
                 200, TimeUnit.MILLISECONDS);
 
         assertEquals("AsyncResult inParallel timeOut", result.failure().get().toThrowable().getCause().getMessage());
@@ -129,7 +127,7 @@ public class AsyncResultTest extends ResultTest {
             return "world";
         };
         LocalDateTime before = LocalDateTime.now();
-        Result<String> result = AsyncResult.inParallel((f, s) -> f + s, supplier, supplier);
+        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + s), supplier, supplier);
 
         assertEquals("worldworld", result.getOrThrow());
         assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
@@ -142,8 +140,8 @@ public class AsyncResultTest extends ResultTest {
             return "world";
         };
         LocalDateTime before = LocalDateTime.now();
-        Result<String> run = AsyncResult.inParallel((f, s) -> f + s, supplier, supplier);
-        Result<String> result = AsyncResult.inParallel((f, s) -> f + s, supplier, run::getOrThrow);
+        Result<String> run = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + s), supplier, supplier);
+        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + s), supplier, run::getOrThrow);
 
         assertEquals("worldworldworld", result.getOrThrow());
         assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
@@ -185,17 +183,17 @@ public class AsyncResultTest extends ResultTest {
 
     @Override
     Result<Integer> number(Integer integer) {
-        return AsyncResult.create(CompletableFuture.completedFuture(integer));
+        return AsyncResult.create(() -> integer);
     }
 
     @Override
     Result<String> string(String string) {
-        return AsyncResult.create(CompletableFuture.completedFuture(string));
+        return AsyncResult.create(() -> string);
     }
 
     @Override
     Result<Optional<String>> optional(Optional<String> optional) {
-        return AsyncResult.create(CompletableFuture.completedFuture(optional));
+        return AsyncResult.create(() -> optional);
     }
 
     @Override

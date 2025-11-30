@@ -40,30 +40,31 @@ public class AsyncResult <T> implements Result<T> {
         });
     }
 
-    private AsyncResult(CompletableFuture<T> future) {
-        this.completableFuture = future.handleAsync((result, throwable) -> {
+    private AsyncResult(Supplier<T> supplier) {
+        this.completableFuture = CompletableFuture.supplyAsync(supplier, ThreadPool.get())
+                .handleAsync((result, throwable) -> {
             if (throwable != null) {
-                return DirectResult.failure(throwable);
+                return DirectResult.failure(throwable.getCause());
             }
             return DirectResult.ok(result);
         });
     }
 
-    private AsyncResult(CompletableFuture<Result<T>> future, int _number) {
-        this.completableFuture = future.handleAsync((result, throwable) -> {
+    private AsyncResult(CompletableFuture<Result<T>> future) {
+        this.completableFuture = future.handleAsync((value, throwable) -> {
             if (throwable != null) {
                 return DirectResult.failure(throwable);
             }
-            return result;
+            return value;
         });
     }
 
-    public static <T> AsyncResult<T> create(CompletableFuture<T> future) {
-        return new AsyncResult<>(future);
+    public static <T> AsyncResult<T> create(Supplier<T> supplier) {
+        return new AsyncResult<>(supplier);
     }
 
     public static <T, K extends Throwable> AsyncResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
-        return createChecked(throwingSupplier, throwableClass, ForkJoinPool.commonPool());
+        return createChecked(throwingSupplier, throwableClass, ThreadPool.get());
     }
 
     public static <T, K extends Throwable> AsyncResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass, Executor executor) {
@@ -87,15 +88,15 @@ public class AsyncResult <T> implements Result<T> {
      * @param <F>
      * @param <S>
      */
-    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second) {
+    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second) {
         return inParallel(joinFunction, first, second, 30, TimeUnit.SECONDS);
     }
 
-    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
-        return inParallel(joinFunction, first, second, timeOut, timeUnit, ForkJoinPool.commonPool());
+    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
+        return inParallel(joinFunction, first, second, timeOut, timeUnit, ThreadPool.get());
     }
 
-    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, T> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit, Executor executor) {
+    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit, Executor executor) {
         CompletableFuture timeoutFuture = new CompletableFuture<>();
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.schedule(() -> {
@@ -106,12 +107,12 @@ public class AsyncResult <T> implements Result<T> {
                 .applyToEither(timeoutFuture, Function.identity());
         CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second, executor)
                 .applyToEither(timeoutFuture, Function.identity());
-        CompletableFuture result = cfFirst.thenCombine(cfSecond, joinFunction);
+        CompletableFuture<Result<T>> result = cfFirst.thenCombine(cfSecond, joinFunction);
         result.whenComplete((r, ex) -> {
             timeoutFuture.cancel(false);
             scheduler.shutdown();
             if (ex != null) {
-                result.completeExceptionally((Throwable) ex);
+                result.completeExceptionally(ex);
             }
             result.complete(r);
         });
@@ -142,35 +143,35 @@ public class AsyncResult <T> implements Result<T> {
     public <R> Result<R> map(Function<T, R> function) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.map(function));
-        return new AsyncResult<>(cf, 0);
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.map(function, throwableClass));
-        return new AsyncResult<>(cf, 0);
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.flatMap(function));
-        return new AsyncResult<>(cf, 0);
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R> Result<R> flatMap(Fun<T, R> fun) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.flatMap(fun));
-        return new AsyncResult<>(cf, 0);
+        return new AsyncResult<>(cf);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.map(function, throwableClass));
-        return new AsyncResult<>(cf, 0);
+        return new AsyncResult<>(cf);
     }
 
     @Override

@@ -165,7 +165,7 @@ public class LazyResult<T> implements Result<T> {
     }
 
     private static <T, F extends Failure> CompletableFuture<DirectResult<T>> toCompletableResult(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier).handleAsync((result, throwable) -> {
+        return CompletableFuture.supplyAsync(supplier, ThreadPool.get()).handleAsync((result, throwable) -> {
             if (throwable != null) {
                 CompletionException completionException = (CompletionException) throwable;
                 if (throwable.getCause() instanceof LazyResultException) {
