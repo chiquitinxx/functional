@@ -18,11 +18,15 @@ import java.util.concurrent.Executors;
 
 public class ThreadPool {
 
-    private static ExecutorService executorService;
+    private static volatile ExecutorService executorService;
 
     public static ExecutorService get() {
         if (executorService == null) {
-            executorService = Executors.newCachedThreadPool();
+            synchronized (ThreadPool.class) {
+                if (executorService == null) {
+                    executorService = Executors.newCachedThreadPool();
+                }
+            }
         }
         return executorService;
     }

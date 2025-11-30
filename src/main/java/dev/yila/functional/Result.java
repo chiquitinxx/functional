@@ -137,6 +137,7 @@ public interface Result<T> {
                 .collect(Collectors.toList());
         if (failures.isEmpty()) {
             T res = successSequence.apply(Arrays.stream(results)
+                .parallel()
                     .map(Result::getOrThrow)
                     .collect(Collectors.toList()));
             return DirectResult.ok(res);
@@ -153,7 +154,7 @@ public interface Result<T> {
      */
     static <U> Result<U> join(Result<Optional<U>> result) {
         if (result.hasFailure()) {
-            return (Result<U>) result;
+            return DirectResult.failure(result.failure().get());
         } else {
             Optional<U> value = result.getOrThrow();
             return DirectResult.createChecked(value::get, NoSuchElementException.class);

@@ -117,7 +117,7 @@ public class AsyncResultTest extends ResultTest {
         Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second,
                 200, TimeUnit.MILLISECONDS);
 
-        assertEquals("AsyncResult inParallel timeOut", result.failure().get().toThrowable().getCause().getMessage());
+        assertEquals("AsyncResult inParallel timeOut", result.failure().get().toThrowable().getMessage());
     }
 
     @Test

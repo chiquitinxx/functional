@@ -29,11 +29,11 @@ public class AsyncResult <T> implements Result<T> {
     private AsyncResult(CompletableFuture<T> future, Class<? extends Throwable> throwableClass) {
         this.completableFuture = future.handleAsync((result, throwable) -> {
             if (throwable != null) {
-                Throwable cause = throwable.getCause().getCause();
+                Throwable cause = throwable.getCause();
                 if (throwableClass.isAssignableFrom(cause.getClass())) {
                     return DirectResult.failure(cause);
                 } else {
-                    throw new RuntimeException(cause);
+                    throw new CompletionException(cause);
                 }
             }
             return DirectResult.ok(result);
@@ -72,7 +72,7 @@ public class AsyncResult <T> implements Result<T> {
             try {
                 return throwingSupplier.get();
             } catch (Throwable t) {
-                throw new RuntimeException(t);
+                throw new CompletionException(t);
             }
         }, executor), throwableClass);
     }
@@ -97,25 +97,25 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     public static <T, F, S> Result<T> inParallel(BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit, Executor executor) {
-        CompletableFuture timeoutFuture = new CompletableFuture<>();
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
         scheduler.schedule(() -> {
             timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
+            return null;
         }, timeOut, timeUnit);
 
-        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first, executor)
-                .applyToEither(timeoutFuture, Function.identity());
-        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second, executor)
-                .applyToEither(timeoutFuture, Function.identity());
+        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first, executor);
+        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second, executor);
+
         CompletableFuture<Result<T>> result = cfFirst.thenCombine(cfSecond, joinFunction);
-        result.whenComplete((r, ex) -> {
-            timeoutFuture.cancel(false);
-            scheduler.shutdown();
+
+        result.whenComplete((r, ex) -> scheduler.shutdown());
+        timeoutFuture.whenComplete((r, ex) -> {
             if (ex != null) {
                 result.completeExceptionally(ex);
             }
-            result.complete(r);
         });
+        
         return new AsyncResult<>(result);
     }
 
