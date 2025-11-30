@@ -152,6 +152,29 @@ mvn clean verify org.pitest:pitest-maven:mutationCoverage
 
 ## Release information
 
-https://central.sonatype.org/publish/publish-maven/
+Check deployments here: https://central.sonatype.com/publishing/deployments
 
-To deploy snapshot: mvn clean deploy -P release
+To create deploy to be release: mvn clean deploy -Prelease -Pgpg
+
+This is the setup needed in .m2/settings.xml
+```
+<settings>
+  <servers>
+    <server>
+	<id>central</id>
+	<username><-- USERNAME --></username>
+	<password><-- PASSWORD --></password>
+    </server>
+  </servers>
+
+  <profiles>
+        <profile>
+            <id>gpg</id>
+            <properties>
+                <gpg.executable>gpg</gpg.executable>
+                <gpg.passphrase><-- PASSPHRASE --></gpg.passphrase>
+            </properties>
+        </profile>
+  </profiles>
+</settings>
+```
