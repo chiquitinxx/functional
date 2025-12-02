@@ -82,11 +82,10 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     public static <T, F, S> Result<T> inParallel(Executor executor, BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService scheduler = TimeoutScheduler.getInstance();
         CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
         scheduler.schedule(() -> {
             timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
-            return null;
         }, timeOut, timeUnit);
 
         CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first, executor);
@@ -94,13 +93,12 @@ public class AsyncResult <T> implements Result<T> {
 
         CompletableFuture<Result<T>> result = cfFirst.thenCombine(cfSecond, joinFunction);
 
-        result.whenComplete((r, ex) -> scheduler.shutdown());
         timeoutFuture.whenComplete((r, ex) -> {
             if (ex != null) {
                 result.completeExceptionally(ex);
             }
         });
-        
+
         return new AsyncResult<>(executor, result);
     }
 
