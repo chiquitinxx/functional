@@ -57,7 +57,7 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <plugin.surefire>3.0.0-M5</plugin.surefire>
     <plugin.compile>3.8.1</plugin.compile>
-    <junit.jupiter>5.10.2</junit.jupiter>
+    <junit.jupiter>5.14.1</junit.jupiter>
     <pitest.version>1.7.4</pitest.version>
     <pitest.junit5.version>0.15</pitest.junit5.version>
     <mockito.version>5.18.0</mockito.version>
@@ -66,7 +66,7 @@
     <maven.javadoc.plugin>3.3.1</maven.javadoc.plugin>
     <maven.gpg.plugin>3.0.1</maven.gpg.plugin>
     <maven.central.release.plugin>0.9.0</maven.central.release.plugin>
-    <maven.jacoco.plugin>0.8.8</maven.jacoco.plugin>
+    <maven.jacoco.plugin>0.8.14</maven.jacoco.plugin>
     <maven.coveralls.plugin>4.5.0-M3</maven.coveralls.plugin>
     <maven.license.plugin>4.6</maven.license.plugin>
   </properties>
