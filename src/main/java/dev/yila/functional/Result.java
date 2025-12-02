@@ -33,6 +33,7 @@ public interface Result<T> {
 
     /**
      * Check the current result has failures.
+     * This is a blocking operation.
      * @return boolean
      */
     boolean hasFailure();
@@ -40,19 +41,21 @@ public interface Result<T> {
     /**
      * Get success result value. Throws an exception if hasFailures.
      * Avoid use this method, embrace more functional style with orElse or chaining.
+     * This is a blocking operation.
      * @return T
      */
     T getOrThrow();
 
     /**
-     * Return the success result or the execution of the function if it has failures
+     * Return the success result or the execution of the function if it has failures.
+     * This is a blocking operation.
      * @param function
      * @return T
      */
     T orElse(Function<Result<T>, T> function);
 
     /**
-     *
+     * Get the failure if exists. It is a blocking operation.
      * @return
      */
     Optional<Failure> failure();
@@ -117,6 +120,7 @@ public interface Result<T> {
 
     /**
      * Get the value if result is success.
+     * This is a blocking operation.
      * @return
      */
     Optional<T> value();

@@ -31,13 +31,13 @@ public class AsyncResultTest extends ResultTest {
 
     @Test
     void createAsyncResultFromSupplier() {
-        AsyncResult<Integer> result = AsyncResult.create(() -> 5);
+        AsyncResult<Integer> result = AsyncResult.create(ThreadPool.get(), () -> 5);
         assertEquals(5, result.getOrThrow());
     }
 
     @Test
     void asyncFailedWithRuntimeException() {
-        AsyncResult<String> result = AsyncResult.create(() -> {
+        AsyncResult<String> result = AsyncResult.create(ThreadPool.get(), () -> {
             throw runtimeException;
         });
         assertTrue(result.hasFailure());
@@ -52,9 +52,9 @@ public class AsyncResultTest extends ResultTest {
             return "hello";
         };
         LocalDateTime before = LocalDateTime.now();
-        Result<String> first = AsyncResult.create(supplier);
-        Result<String> second = AsyncResult.create(supplier);
-        Result<String> third = AsyncResult.create(supplier);
+        Result<String> first = AsyncResult.create(ThreadPool.get(), supplier);
+        Result<String> second = AsyncResult.create(ThreadPool.get(), supplier);
+        Result<String> third = AsyncResult.create(ThreadPool.get(), supplier);
 
         Result<String> sequence = Result.sequence((list) -> list.stream()
                 .reduce("", String::concat), first, second, third);
@@ -68,7 +68,7 @@ public class AsyncResultTest extends ResultTest {
         Supplier<String> first = () -> "hello";
         Supplier<String> second = () -> "world";
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
+        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
         assertEquals("hello world!", result.getOrThrow());
     }
@@ -78,7 +78,7 @@ public class AsyncResultTest extends ResultTest {
         Supplier<String> first = () -> "hello";
         Supplier<String> second = () -> "world";
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second, 1, TimeUnit.SECONDS);
+        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second, 1, TimeUnit.SECONDS);
 
         assertEquals("hello world!", result.getOrThrow());
     }
@@ -90,7 +90,7 @@ public class AsyncResultTest extends ResultTest {
             throw new RuntimeException("world is down");
         };
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
+        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
         assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
     }
@@ -102,7 +102,7 @@ public class AsyncResultTest extends ResultTest {
             throw new RuntimeException("world is down");
         };
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
+        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
         assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
     }
@@ -114,7 +114,7 @@ public class AsyncResultTest extends ResultTest {
             while (true) {}
         };
 
-        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + " " + s + "!"), first, second,
+        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second,
                 200, TimeUnit.MILLISECONDS);
 
         assertEquals("AsyncResult inParallel timeOut", result.failure().get().toThrowable().getMessage());
@@ -127,7 +127,7 @@ public class AsyncResultTest extends ResultTest {
             return "world";
         };
         LocalDateTime before = LocalDateTime.now();
-        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + s), supplier, supplier);
+        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + s), supplier, supplier);
 
         assertEquals("worldworld", result.getOrThrow());
         assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
@@ -140,8 +140,8 @@ public class AsyncResultTest extends ResultTest {
             return "world";
         };
         LocalDateTime before = LocalDateTime.now();
-        Result<String> run = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + s), supplier, supplier);
-        Result<String> result = AsyncResult.inParallel((f, s) -> DirectResult.ok(f + s), supplier, run::getOrThrow);
+        Result<String> run = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + s), supplier, supplier);
+        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + s), supplier, run::getOrThrow);
 
         assertEquals("worldworldworld", result.getOrThrow());
         assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
@@ -150,7 +150,7 @@ public class AsyncResultTest extends ResultTest {
     @Test
     void createCheckedAsync() {
         ThrowingSupplier<String, TestException> supplier = () -> "hello";
-        Result<String> result = AsyncResult.createChecked(supplier, TestException.class);
+        Result<String> result = AsyncResult.createChecked(ThreadPool.get(), supplier, TestException.class);
 
         assertEquals("hello", result.getOrThrow());
     }
@@ -160,7 +160,7 @@ public class AsyncResultTest extends ResultTest {
         ThrowingSupplier<String, TestException> supplier = () -> {
             throw new TestException();
         };
-        Result<String> result = AsyncResult.createChecked(supplier, TestException.class);
+        Result<String> result = AsyncResult.createChecked(ThreadPool.get(), supplier, TestException.class);
 
         assertEquals(TestException.class, result.failure().get().toThrowable().getClass());
     }
@@ -172,7 +172,7 @@ public class AsyncResultTest extends ResultTest {
         };
 
         AtomicInteger atomicInteger = new AtomicInteger(0);
-        AsyncResult<String> result = AsyncResult.createChecked(supplier, TestException.class);
+        AsyncResult<String> result = AsyncResult.createChecked(ThreadPool.get(), supplier, TestException.class);
         result.onFailure(f -> atomicInteger.incrementAndGet());
 
         assertThrows(RuntimeException.class, result::getOrThrow, "hey");
@@ -183,17 +183,17 @@ public class AsyncResultTest extends ResultTest {
 
     @Override
     Result<Integer> number(Integer integer) {
-        return AsyncResult.create(() -> integer);
+        return AsyncResult.create(ThreadPool.get(), () -> integer);
     }
 
     @Override
     Result<String> string(String string) {
-        return AsyncResult.create(() -> string);
+        return AsyncResult.create(ThreadPool.get(), () -> string);
     }
 
     @Override
     Result<Optional<String>> optional(Optional<String> optional) {
-        return AsyncResult.create(() -> optional);
+        return AsyncResult.create(ThreadPool.get(), () -> optional);
     }
 
     @Override
@@ -206,6 +206,6 @@ public class AsyncResultTest extends ResultTest {
         ThrowingSupplier<Integer, E> supplier = () -> {
             throw throwable;
         };
-        return AsyncResult.createChecked(supplier, clazz);
+        return AsyncResult.createChecked(ThreadPool.get(), supplier, clazz);
     }
 }

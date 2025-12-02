@@ -25,8 +25,10 @@ import java.util.function.Supplier;
 public class AsyncResult <T> implements Result<T> {
 
     private final CompletableFuture<Result<T>> completableFuture;
+    private final Executor executor;
 
-    private AsyncResult(CompletableFuture<T> future, Class<? extends Throwable> throwableClass) {
+    private AsyncResult(Executor executor, CompletableFuture<T> future, Class<? extends Throwable> throwableClass) {
+        this.executor = executor;
         this.completableFuture = future.handleAsync((result, throwable) -> {
             if (throwable != null) {
                 Throwable cause = throwable.getCause();
@@ -40,8 +42,9 @@ public class AsyncResult <T> implements Result<T> {
         });
     }
 
-    private AsyncResult(Supplier<T> supplier) {
-        this.completableFuture = CompletableFuture.supplyAsync(supplier, ThreadPool.get())
+    private AsyncResult(Executor executor, Supplier<T> supplier) {
+        this.executor = executor;
+        this.completableFuture = CompletableFuture.supplyAsync(supplier, executor)
                 .handleAsync((result, throwable) -> {
             if (throwable != null) {
                 return DirectResult.failure(throwable.getCause());
@@ -50,7 +53,8 @@ public class AsyncResult <T> implements Result<T> {
         });
     }
 
-    private AsyncResult(CompletableFuture<Result<T>> future) {
+    private AsyncResult(Executor executor, CompletableFuture<Result<T>> future) {
+        this.executor = executor;
         this.completableFuture = future.handleAsync((value, throwable) -> {
             if (throwable != null) {
                 return DirectResult.failure(throwable);
@@ -59,16 +63,12 @@ public class AsyncResult <T> implements Result<T> {
         });
     }
 
-    public static <T> AsyncResult<T> create(Supplier<T> supplier) {
-        return new AsyncResult<>(supplier);
+    public static <T> AsyncResult<T> create(Executor executor, Supplier<T> supplier) {
+        return new AsyncResult<>(executor, supplier);
     }
 
-    public static <T, K extends Throwable> AsyncResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
-        return createChecked(throwingSupplier, throwableClass, ThreadPool.get());
-    }
-
-    public static <T, K extends Throwable> AsyncResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass, Executor executor) {
-        return new AsyncResult<>(CompletableFuture.supplyAsync(() -> {
+    public static <T, K extends Throwable> AsyncResult<T> createChecked(Executor executor, ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
+        return new AsyncResult<>(executor, CompletableFuture.supplyAsync(() -> {
             try {
                 return throwingSupplier.get();
             } catch (Throwable t) {
@@ -77,26 +77,11 @@ public class AsyncResult <T> implements Result<T> {
         }, executor), throwableClass);
     }
 
-    /**
-     * Execute two tasks in parallel
-     * Default timeout is 30 seconds
-     * @param joinFunction
-     * @param first
-     * @param second
-     * @return
-     * @param <T>
-     * @param <F>
-     * @param <S>
-     */
-    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second) {
-        return inParallel(joinFunction, first, second, 30, TimeUnit.SECONDS);
+    public static <T, F, S> Result<T> inParallel(Executor executor, BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second) {
+        return inParallel(executor, joinFunction, first, second, 30, TimeUnit.SECONDS);
     }
 
-    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
-        return inParallel(joinFunction, first, second, timeOut, timeUnit, ThreadPool.get());
-    }
-
-    public static <T, F, S> Result<T> inParallel(BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit, Executor executor) {
+    public static <T, F, S> Result<T> inParallel(Executor executor, BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
         scheduler.schedule(() -> {
@@ -116,7 +101,7 @@ public class AsyncResult <T> implements Result<T> {
             }
         });
         
-        return new AsyncResult<>(result);
+        return new AsyncResult<>(executor, result);
     }
 
     @Override
@@ -143,35 +128,35 @@ public class AsyncResult <T> implements Result<T> {
     public <R> Result<R> map(Function<T, R> function) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.map(function));
-        return new AsyncResult<>(cf);
+        return new AsyncResult<>(this.executor, cf);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.map(function, throwableClass));
-        return new AsyncResult<>(cf);
+        return new AsyncResult<>(this.executor, cf);
     }
 
     @Override
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.flatMap(function));
-        return new AsyncResult<>(cf);
+        return new AsyncResult<>(this.executor, cf);
     }
 
     @Override
     public <R> Result<R> flatMap(Fun<T, R> fun) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.flatMap(fun));
-        return new AsyncResult<>(cf);
+        return new AsyncResult<>(this.executor, cf);
     }
 
     @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         CompletableFuture<Result<R>> cf = this.completableFuture
                 .thenApply(r -> r.map(function, throwableClass));
-        return new AsyncResult<>(cf);
+        return new AsyncResult<>(this.executor, cf);
     }
 
     @Override

@@ -11,7 +11,7 @@ public class AsyncResultFailuresTest {
     @Test
     void mapShouldPreserveFailure() {
         Failure originalFailure = Failure.create("Original Failure");
-        Result<String> failedResult = AsyncResult.create(() -> "success")
+        Result<String> failedResult = AsyncResult.create(ThreadPool.get(), () -> "success")
                 .flatMap(s -> DirectResult.failure(originalFailure));
 
         assertTrue(failedResult.hasFailure(), "Should have failure");
@@ -25,7 +25,7 @@ public class AsyncResultFailuresTest {
 
     @Test
     void exceptionAfterMapReturnsFailure() {
-        Result<String> failedResult = AsyncResult.create(() -> "success")
+        Result<String> failedResult = AsyncResult.create(ThreadPool.get(), () -> "success")
                 .flatMap(s -> {throw new RuntimeException("yup");});
 
         assertTrue(failedResult.hasFailure(), "Should have failure");

@@ -25,7 +25,7 @@ public class MixResultTest {
     @RepeatedTest(10)
     public void sequenceAll() {
         Result<String> direct = DirectResult.ok("direct");
-        Result<String> async = AsyncResult.create(() -> "async");
+        Result<String> async = AsyncResult.create(ThreadPool.get(), () -> "async");
         Result<String> lazy = LazyResult.create(() -> "lazy");
 
         Result<String> result = Result.sequence(list -> {
