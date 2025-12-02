@@ -32,10 +32,10 @@ An interface that represents the result of an operation, which can be either a s
 It has three implementations:
 
 1.  **`DirectResult<T>`**: A synchronous, immediate result.
-2.  **`AsyncResult<T>`**: An asynchronous result, backed by `CompletableFuture`.
+2.  **`AsyncResult<T>`**: An asynchronous result, backed by `CompletableFuture`. For all async operations, you must provide your own `ExecutorService`.
 3.  **`LazyResult<T>`**: A lazy-evaluated result that only computes its value when it's needed.
 
-**Usage:**
+#### Synchronous Usage
 
 ```java
 // Creating a success result
@@ -52,6 +52,45 @@ Result<String> finalResult = success
 // Getting the value
 String resultString = finalResult.getOrThrow(); // "Final value: 200"
 Integer errorCase = failure.orElse(f -> -1);    // -1
+```
+
+#### Asynchronous Usage with `AsyncResult`
+
+When performing asynchronous operations, you are responsible for providing and managing an `ExecutorService`. This gives you full control over your application's concurrency model.
+
+```java
+// 1. Create and manage your own ExecutorService
+ExecutorService executor = Executors.newFixedThreadPool(4);
+
+try {
+    // 2. Use the executor to create an AsyncResult
+    Supplier<Integer> longRunningTask = () -> {
+        // ... some computation ...
+        return 200;
+    };
+    Result<Integer> asyncResult = AsyncResult.create(executor, longRunningTask);
+
+    // map, flatMap, and other operations are non-blocking
+    Result<String> finalAsyncResult = asyncResult
+        .map(value -> "The value is: " + value);
+
+    // 3. Block to get the result when you need it
+    System.out.println(finalAsyncResult.getOrThrow()); // "The value is: 200"
+
+    // 4. Example with inParallel
+    Result<String> parallelResult = Result.inParallel(
+        executor,
+        (s1, s2) -> DirectResult.ok(s1 + " " + s2), // Join function
+        () -> "Hello",                             // First task
+        () -> "World"                              // Second task
+    );
+
+    System.out.println(parallelResult.getOrThrow()); // "Hello World"
+
+} finally {
+    // 5. Always shut down your executor
+    executor.shutdown();
+}
 ```
 
 ### `Fun<Input, Output>` and `Fun2<Input1, Input2, Output>`
