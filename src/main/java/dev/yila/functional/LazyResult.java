@@ -14,13 +14,9 @@
 package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
-import dev.yila.functional.failure.LazyResultException;
-import dev.yila.functional.failure.ThrowableFailure;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -42,14 +38,20 @@ public class LazyResult<T> implements Result<T> {
         if (supplier == null) {
             throw new IllegalArgumentException("null is not a valid supplier to create LazyResult");
         }
-        return new LazyResult<>(supplier);
+        return new LazyResult<>(() -> {
+            try {
+                return DirectResult.ok(supplier.get());
+            } catch (Throwable t) {
+                return DirectResult.failure(t);
+            }
+        });
     }
 
-    private final Supplier<T> supplier;
-    private CompletableFuture<DirectResult<T>> completableFuture;
+    private final Supplier<Result<T>> _supplier;
+    private volatile Result<T> result;
 
-    private LazyResult(Supplier<T> supplier) {
-        this.supplier = supplier;
+    private LazyResult(Supplier<Result<T>> supplier) {
+        this._supplier = supplier;
     }
 
     @Override
@@ -57,123 +59,78 @@ public class LazyResult<T> implements Result<T> {
         if (function == null) {
             throw new IllegalArgumentException("null is not a valid function to use LazyResult.map");
         }
-        return new LazyResult<>(() -> function.apply(this.supplier.get()));
+        return new LazyResult<>(() -> execute().map(function));
     }
 
     @Override
     public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);
-        return new LazyResult<>(() -> {
-            try {
-                return function.apply(this.supplier.get());
-            } catch (Throwable throwable) {
-                if (throwableClass.isAssignableFrom(throwable.getClass())) {
-                    throw new LazyResultException(new ThrowableFailure(throwable));
-                } else {
-                    throw new RuntimeException(throwable);
-                }
-            }
-        });
+        return new LazyResult<>(() -> execute().map(function, throwableClass));
     }
 
     @Override
     public Result<T> onSuccess(Consumer<T> consumer) {
-        return getResult().onSuccess(consumer);
+        return execute().onSuccess(consumer);
     }
 
     @Override
     public Result<T> onFailure(Consumer<Failure> consumer) {
-        return getResult().onFailure(consumer);
+        return execute().onFailure(consumer);
     }
 
     @Override
     public Optional<T> value() {
-        return getResult().value();
+        return execute().value();
     }
 
     @Override
     public <V> Result<V> flatMap(Function<T, Result<V>> function) {
         Objects.requireNonNull(function);
-        return new LazyResult<>(() -> {
-            Result<V> value = function.apply(this.supplier.get());
-            if (value.hasFailure()) {
-                throw new LazyResultException(value.failure().get());
-            }
-            return value.getOrThrow();
-        });
+        return new LazyResult<>(() -> execute().flatMap(function));
     }
 
     @Override
     public <V> Result<V> flatMap(Fun<T, V> fun) {
         Objects.requireNonNull(fun);
-        return new LazyResult<>(() -> {
-            Result<V> value = fun.apply(this.supplier.get());
-            if (value.hasFailure()) {
-                throw new LazyResultException(value.failure().get());
-            }
-            return value.getOrThrow();
-        });
+        return new LazyResult<>(() -> execute().flatMap(fun));
     }
 
     @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);
-        return flatMap((input) -> {
-            try {
-                return DirectResult.ok(function.apply(input));
-            } catch (Throwable throwable) {
-                if (throwableClass.isAssignableFrom(throwable.getClass())) {
-                    return DirectResult.failure(throwable);
-                } else {
-                    throw new RuntimeException(throwable);
-                }
-            }
-        });
+        return new LazyResult<>(() -> execute().flatMap(function, throwableClass));
     }
 
     @Override
     public boolean hasFailure() {
-        return getResult().hasFailure();
+        return execute().hasFailure();
     }
 
     @Override
     public T getOrThrow() {
-        return getResult().getOrThrow();
+        return execute().getOrThrow();
     }
 
     @Override
     public T orElse(Function<Result<T>, T> function) {
-        return getResult().orElse(function);
+        return execute().orElse(function);
     }
 
     @Override
     public Optional<Failure> failure() {
-        return getResult().failure();
+        return execute().failure();
     }
 
-    private synchronized CompletableFuture<DirectResult<T>> execute() {
-        if (completableFuture == null) {
-            completableFuture = toCompletableResult(this.supplier);
-        }
-        return completableFuture;
-    }
-
-    private Result<T> getResult() {
-        return execute().join();
-    }
-
-    private static <T, F extends Failure> CompletableFuture<DirectResult<T>> toCompletableResult(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, ThreadPool.get()).handleAsync((result, throwable) -> {
-            if (throwable != null) {
-                CompletionException completionException = (CompletionException) throwable;
-                if (throwable.getCause() instanceof LazyResultException) {
-                    return DirectResult.failure(((LazyResultException) throwable.getCause()).getFailure());
+    private Result<T> execute() {
+        if (result == null) {
+            synchronized (this) {
+                if (result == null) {
+                    result = this._supplier.get();
                 }
-                return DirectResult.failure(Failure.create(completionException.getCause()));
             }
-            return DirectResult.ok(result);
-        });
+        }
+        return result;
     }
 }

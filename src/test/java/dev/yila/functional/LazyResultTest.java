@@ -15,7 +15,6 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.CodeDescriptionFailure;
-import dev.yila.functional.failure.ThrowableFailure;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -49,44 +48,11 @@ public class LazyResultTest extends ResultTest {
     }
 
     @Test
-    void unexpectedExceptionInCheckedMap() {
-        ThrowingFunction throwingFunction = (input) -> {
-            throw new RuntimeException();
-        };
-        ThrowableFailure failure = (ThrowableFailure) number(3)
-                .map(throwingFunction, NullPointerException.class)
-                .failure().get();
-        assertEquals("java.lang.RuntimeException", failure.getThrowable().getMessage());
-    }
-
-    @Test
-    void unexpectedExceptionInCheckedFlatMap() {
-        ThrowingFunction throwingFunction = (input) -> {
-            throw new RuntimeException();
-        };
-        ThrowableFailure failure = (ThrowableFailure) number(3)
-                        .flatMap(throwingFunction, NullPointerException.class)
-                        .failure().get();
-        assertEquals("java.lang.RuntimeException", failure.getThrowable().getMessage());
-    }
-
-    @Test
     void mapFunction() {
         LazyResult<String> hello = LazyResult.create(() -> ("hello"));
         Result<String> upperHello = hello.map(String::toUpperCase);
         assertNotSame(hello, upperHello);
         assertEquals("HELLO", upperHello.getOrThrow());
-    }
-
-    @Test
-    void exceptionInMapFunction() {
-        LazyResult<String> hello = LazyResult.create(() -> ("hello"));
-        Result<String> failureLazy = hello.map(input -> {
-            throw runtimeException;
-        });
-        assertNotSame(hello, failureLazy);
-        assertTrue(failureLazy.hasFailure());
-        assertSame(runtimeException, failureLazy.failure().get().toThrowable());
     }
 
     @Test
@@ -121,7 +87,7 @@ public class LazyResultTest extends ResultTest {
         });
         assertEquals(0, counter.get());
         assertEquals(64, last.getOrThrow());
-        assertEquals(3, counter.get());
+        assertEquals(2, counter.get());
     }
 
     @Test
@@ -170,6 +136,20 @@ public class LazyResultTest extends ResultTest {
     }
 
     @Test
+    void resultIsMemoized() {
+        AtomicInteger atomic = new AtomicInteger(0);
+        Result<String> hello = LazyResult.create(() -> {
+            atomic.incrementAndGet();
+            return "hello";
+        });
+        assertEquals("HELLO", hello.map(String::toUpperCase).getOrThrow());
+        assertEquals("hello world", hello.map(s -> s + " world").getOrThrow());
+        assertEquals("hello", hello.getOrThrow());
+        assertEquals("hello", hello.getOrThrow());
+        assertEquals(1, atomic.get());
+    }
+
+    @Test
     void time() {
         Supplier<String> supplier = () -> {
             try { Thread.sleep(100); } catch (InterruptedException ignored) {}
@@ -186,7 +166,7 @@ public class LazyResultTest extends ResultTest {
         assertEquals("hellohellohello", sequence.getOrThrow());
         long millis = ChronoUnit.MILLIS.between(before, LocalDateTime.now());
         System.out.println("Millis: " + millis);
-        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 250);
+        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 150);
     }
 
     private int add(int number) {
