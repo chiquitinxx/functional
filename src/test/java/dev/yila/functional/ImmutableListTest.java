@@ -119,4 +119,12 @@ public class ImmutableListTest {
         assertEquals(numberOfThreads,
                 results.values().stream().filter(r -> r.getOrThrow().head().equals(1)).count());
     }
+
+    @Test
+    public void mapList() {
+        ImmutableList<String> list = ImmutableList.create("hello", "world");
+
+        assertEquals("[HELLO, WORLD]", list.map(String::toUpperCase).toString());
+        assertEquals("[5, 5]", list.map(String::length).toString());
+    }
 }

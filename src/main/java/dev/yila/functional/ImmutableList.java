@@ -15,8 +15,10 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.EmptyTailFailure;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Immutable list that can be divided by head and tails.
@@ -25,7 +27,7 @@ import java.util.Objects;
 public class ImmutableList<T> {
 
     /**
-     *
+     * Create a new immutable list.
      * @param elements
      * @return
      * @param <T>
@@ -44,6 +46,12 @@ public class ImmutableList<T> {
         return new ImmutableList<>(new Elements<>(elements));
     }
 
+    /**
+     * Create new Immutable list from a Java List.
+     * @param list
+     * @return
+     * @param <T>
+     */
     public static <T> ImmutableList<T> from(List<T> list) {
         if (list == null || list.isEmpty()) {
             throw new IllegalArgumentException("List must contains at least 1 element.");
@@ -94,6 +102,10 @@ public class ImmutableList<T> {
             return all.length - position;
         }
 
+        T[] currentCopy() {
+            return Arrays.copyOfRange(all, position, all.length - position);
+        }
+
         @Override
         public String toString() {
             Elements<T> next = this.next();
@@ -136,6 +148,15 @@ public class ImmutableList<T> {
      */
     public int size() {
         return elements.size();
+    }
+
+    public <V> ImmutableList<V> map(Function<T, V> function) {
+        T[] copy = this.elements.currentCopy();
+        Object[] result = new Object[copy.length];
+        for (int i = 0; i < copy.length; i++) {
+            result[i] = function.apply(copy[i]);
+        }
+        return new ImmutableList<>(new Elements<>((V[])result));
     }
 
     @Override
