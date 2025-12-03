@@ -15,9 +15,9 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.EmptyTailFailure;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -43,7 +43,11 @@ public class ImmutableList<T> {
                 throw new IllegalArgumentException("Elements can not be null.");
             }
         }
-        return new ImmutableList<>(new Elements<>(elements));
+        ImmutableList<T> list = null;
+        for (int i = elements.length - 1; i >= 0; i--) {
+            list = new ImmutableList<>(elements[i], list);
+        }
+        return list;
     }
 
     /**
@@ -61,65 +65,21 @@ public class ImmutableList<T> {
                 throw new IllegalArgumentException("Elements in the list can not be null.");
             }
         }
-        T[] array = (T[]) list.toArray();
-        return new ImmutableList<>(new Elements<>(array));
+        ImmutableList<T> il = null;
+        for (int i = list.size() - 1; i >= 0; i--) {
+            il = new ImmutableList<>(list.get(i), il);
+        }
+        return il;
     }
 
-    static class Elements<T> {
-        private final T current;
-        private final T[] all;
-        private Elements<T> nextElements;
-        private final int position;
+    private final T head;
+    private final ImmutableList<T> tail;
+    private final int size;
 
-        Elements(T[] all) {
-            this.all = all;
-            this.position = 0;
-            this.current = all[0];
-        }
-
-        Elements(T[] all, int position) {
-            this.all = all;
-            this.position = position;
-            this.current = all[position];
-        }
-
-        T current() {
-            return this.current;
-        }
-
-        synchronized Elements<T> next() {
-            if (nextElements == null) {
-                if (all.length - position == 1) {
-                    return null;
-                } else {
-                    this.nextElements = new Elements<>(all, position + 1);
-                }
-            }
-            return this.nextElements;
-        }
-
-        int size() {
-            return all.length - position;
-        }
-
-        T[] currentCopy() {
-            return Arrays.copyOfRange(all, position, all.length - position);
-        }
-
-        @Override
-        public String toString() {
-            Elements<T> next = this.next();
-            if (next == null) {
-                return this.current.toString();
-            }
-            return this.current.toString() + ", " + next;
-        }
-    }
-
-    private final Elements<T> elements;
-
-    private ImmutableList(Elements<T> elements) {
-        this.elements = elements;
+    private ImmutableList(T head, ImmutableList<T> tail) {
+        this.head = head;
+        this.tail = tail;
+        this.size = 1 + (tail == null ? 0 : tail.size());
     }
 
     /**
@@ -127,7 +87,7 @@ public class ImmutableList<T> {
      * @return
      */
     public T head() {
-        return elements.current();
+        return this.head;
     }
 
     /**
@@ -135,11 +95,10 @@ public class ImmutableList<T> {
      * @return
      */
     public Result<ImmutableList<T>> tail() {
-        Elements<T> next = elements.next();
-        if (next == null) {
+        if (tail == null) {
             return DirectResult.failure(new EmptyTailFailure());
         }
-        return DirectResult.ok(new ImmutableList<>(next));
+        return DirectResult.ok(tail);
     }
 
     /**
@@ -147,28 +106,45 @@ public class ImmutableList<T> {
      * @return
      */
     public int size() {
-        return elements.size();
+        return this.size;
     }
 
+    /**
+     * Map function on elements in ImmutableList
+     * @param function
+     * @return
+     * @param <V>
+     */
     public <V> ImmutableList<V> map(Function<T, V> function) {
-        T[] copy = this.elements.currentCopy();
-        Object[] result = new Object[copy.length];
-        for (int i = 0; i < copy.length; i++) {
-            result[i] = function.apply(copy[i]);
-        }
-        return new ImmutableList<>(new Elements<>((V[])result));
+        ImmutableList<V> mappedTail = tail == null ? null : tail.map(function);
+        return new ImmutableList<>(function.apply(head), mappedTail);
     }
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof ImmutableList &&
-                ((ImmutableList)obj).head().equals(this.head()) &&
-                Objects.equals(((ImmutableList)obj).tail().orElse(r -> null),
-                        this.tail().orElse(r -> null));
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof ImmutableList)) {
+            return false;
+        }
+        ImmutableList<?> other = (ImmutableList<?>) obj;
+        if (!Objects.equals(this.head, other.head)) {
+            return false;
+        }
+        return Objects.equals(this.tail, other.tail);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(head);
+        result = 31 * result + Objects.hashCode(tail);
+        return result;
     }
 
     @Override
     public String toString() {
-        return "[" + this.elements.toString() +  "]";
+        return head.toString() + Optional.ofNullable(tail)
+                .map(il -> ", " + il).orElse("");
     }
 }
