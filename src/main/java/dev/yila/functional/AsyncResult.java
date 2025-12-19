@@ -39,7 +39,7 @@ public class AsyncResult <T> implements Result<T> {
                 }
             }
             return DirectResult.ok(result);
-        });
+        }, executor);
     }
 
     private AsyncResult(Executor executor, Supplier<T> supplier) {
@@ -50,7 +50,7 @@ public class AsyncResult <T> implements Result<T> {
                 return DirectResult.failure(throwable.getCause());
             }
             return DirectResult.ok(result);
-        });
+        }, executor);
     }
 
     private AsyncResult(Executor executor, CompletableFuture<Result<T>> future) {
@@ -60,7 +60,7 @@ public class AsyncResult <T> implements Result<T> {
                 return DirectResult.failure(throwable);
             }
             return value;
-        });
+        }, executor);
     }
 
     public static <T> AsyncResult<T> create(Executor executor, Supplier<T> supplier) {
@@ -84,7 +84,7 @@ public class AsyncResult <T> implements Result<T> {
     public static <T, F, S> Result<T> inParallel(Executor executor, BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
         ScheduledExecutorService scheduler = TimeoutScheduler.getInstance();
         CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
-        scheduler.schedule(() -> {
+        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
             timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
         }, timeOut, timeUnit);
 
@@ -97,6 +97,12 @@ public class AsyncResult <T> implements Result<T> {
             if (ex != null) {
                 result.completeExceptionally(ex);
             }
+        });
+
+        result.whenComplete((r, ex) -> {
+           if (!timeoutTask.isDone()) {
+               timeoutTask.cancel(true);
+           }
         });
 
         return new AsyncResult<>(executor, result);
