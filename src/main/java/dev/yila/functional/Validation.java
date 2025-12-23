@@ -20,15 +20,24 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Utility class for validating values using multiple validation functions.
+ * Each validation can return a specific failure if the validation fails.
+ */
 public class Validation {
 
     /**
-     * Validate a value with one or more functions
-     * @param value
-     * @param validations
-     * @return
-     * @param <T>
-     * @param <F>
+     * Validates a value against multiple validation functions.
+     * Each validation consists of a failure and a predicate function.
+     * If any validation fails, the corresponding failure is returned.
+     * 
+     * @param value the value to validate
+     * @param validations pairs of (failure, validation function)
+     * @param <T> the type of the value being validated
+     * @param <F> the type of failure that extends Failure
+     * @return a Result containing the validated value if all validations pass,
+     *         or the first failure if any validation fails
+     * @throws IllegalArgumentException if value is null or no validations are provided
      */
     @SafeVarargs
     public static <T, F extends Failure> Result<T> validate(T value, Pair<F, Function<T, Boolean>>... validations) {
@@ -45,13 +54,16 @@ public class Validation {
     }
 
     /**
-     * Validate a value with one function
-     * @param value
-     * @param failure
-     * @param function
-     * @return
-     * @param <T>
-     * @param <F>
+     * Validates a value against a single validation function.
+     * 
+     * @param value the value to validate
+     * @param failure the failure to return if validation fails
+     * @param function the validation function that returns true if validation passes
+     * @param <T> the type of the value being validated
+     * @param <F> the type of failure that extends Failure
+     * @return a Result containing the validated value if validation passes,
+     *         or the specified failure if validation fails
+     * @throws IllegalArgumentException if any parameter is null
      */
     public static <T, F extends Failure> Result<T> validate(T value, F failure, Function<T, Boolean> function) {
         if (failure == null) {

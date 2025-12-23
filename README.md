@@ -159,28 +159,6 @@ for (int i = 0; i < 1000; i++) {
 Integer finalCount = Agent.get(counter); // 1000
 ```
 
-### `ImmutableList<T>`
-
-A thread-safe, immutable list that is designed to be easily and efficiently divided into a `head` (the first element) and a `tail` (the rest of the list).
-
-**Usage:**
-
-```java
-ImmutableList<Integer> list = ImmutableList.create(1, 2, 3, 4);
-
-// Get the head
-Integer head = list.head(); // 1
-
-// Get the tail
-Result<ImmutableList<Integer>> tailResult = list.tail();
-
-// The tail is a Result because the list could be empty
-tailResult.onSuccess(tail -> {
-    System.out.println(tail.head()); // 2
-    System.out.println(tail.toString()); // "[2, 3, 4]"
-});
-```
-
 ## Dependencies
 
 Java 8, no more dependencies.

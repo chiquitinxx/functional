@@ -15,14 +15,28 @@ package dev.yila.functional.failure;
 
 import java.util.Objects;
 
+/**
+ * A failure that contains a descriptive error message.
+ */
 public class DescriptionFailure implements Failure {
 
+    /**
+     * Creates a new DescriptionFailure.
+     * 
+     * @param description the error description
+     * @return a new DescriptionFailure
+     */
     public static DescriptionFailure create(String description) {
         return new DescriptionFailure(description);
     }
 
     private final String description;
 
+    /**
+     * Constructs a new DescriptionFailure.
+     * 
+     * @param description the error description
+     */
     DescriptionFailure(String description) {
         Objects.requireNonNull(description);
         this.description = description;

@@ -18,14 +18,27 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * A failure that contains multiple individual failures.
+ */
 public class MultipleFailures implements Failure {
 
     private final List<Failure> failures;
 
+    /**
+     * Creates a new MultipleFailures from a list of failures.
+     * 
+     * @param failures the list of failures
+     */
     public MultipleFailures(List<Failure> failures) {
         this.failures = failures;
     }
 
+    /**
+     * Creates a new MultipleFailures from multiple failure objects.
+     * 
+     * @param failures the failure objects
+     */
     public MultipleFailures(Failure... failures) {
         this.failures = Arrays.asList(failures);
     }
@@ -35,6 +48,11 @@ public class MultipleFailures implements Failure {
         return showFailures(Failure::toString);
     }
 
+    /**
+     * Returns the list of individual failures.
+     * 
+     * @return the list of failures
+     */
     public List<Failure> getFailures() {
         return failures;
     }

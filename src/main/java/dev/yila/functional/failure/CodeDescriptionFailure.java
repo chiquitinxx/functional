@@ -13,8 +13,18 @@
  */
 package dev.yila.functional.failure;
 
+/**
+ * A failure that contains an error code and description.
+ */
 public class CodeDescriptionFailure implements Failure {
 
+    /**
+     * Creates a new CodeDescriptionFailure.
+     * 
+     * @param code the error code
+     * @param description the error description
+     * @return a new CodeDescriptionFailure
+     */
     public static CodeDescriptionFailure create(String code, String description) {
         return new CodeDescriptionFailure(code, description);
     }
@@ -22,6 +32,12 @@ public class CodeDescriptionFailure implements Failure {
     private final String code;
     private final String description;
 
+    /**
+     * Constructs a new CodeDescriptionFailure.
+     * 
+     * @param code the error code
+     * @param description the error description
+     */
     CodeDescriptionFailure(String code, String description) {
         this.code = code;
         this.description = description;

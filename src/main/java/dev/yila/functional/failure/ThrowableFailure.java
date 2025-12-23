@@ -13,14 +13,27 @@
  */
 package dev.yila.functional.failure;
 
+/**
+ * A failure that wraps a Throwable.
+ */
 public class ThrowableFailure implements Failure {
 
     private final Throwable throwable;
 
+    /**
+     * Creates a new ThrowableFailure.
+     * 
+     * @param throwable the throwable to wrap
+     */
     public ThrowableFailure(Throwable throwable) {
         this.throwable = throwable;
     }
 
+    /**
+     * Returns the wrapped throwable.
+     * 
+     * @return the wrapped throwable
+     */
     public Throwable getThrowable() {
         return this.throwable;
     }

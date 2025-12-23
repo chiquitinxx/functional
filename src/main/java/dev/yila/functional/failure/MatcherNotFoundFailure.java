@@ -13,14 +13,27 @@
  */
 package dev.yila.functional.failure;
 
+/**
+ * A failure that indicates no matcher was found for a given value.
+ */
 public class MatcherNotFoundFailure implements Failure {
 
     private final Object value;
 
+    /**
+     * Creates a new MatcherNotFoundFailure.
+     * 
+     * @param value the value that didn't match any case
+     */
     public MatcherNotFoundFailure(Object value) {
         this.value = value;
     }
 
+    /**
+     * Returns the value that didn't match any case.
+     * 
+     * @return the unmatched value
+     */
     public Object getValue() {
         return value;
     }
