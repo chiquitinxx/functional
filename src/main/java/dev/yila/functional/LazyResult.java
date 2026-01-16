@@ -91,9 +91,9 @@ public class LazyResult<T> implements Result<T> {
     }
 
     @Override
-    public <V> Result<V> flatMap(Fun<T, V> fun) {
+    public <V> Result<V> map(Fun<T, V> fun) {
         Objects.requireNonNull(fun);
-        return new LazyResult<>(() -> execute().flatMap(fun));
+        return new LazyResult<>(() -> execute().map(fun));
     }
 
     @Override

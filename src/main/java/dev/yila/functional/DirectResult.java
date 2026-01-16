@@ -173,7 +173,7 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
-    public <R> Result<R> flatMap(Fun<T, R> fun) {
+    public <R> Result<R> map(Fun<T, R> fun) {
         Objects.requireNonNull(fun);
         if (hasFailure()) {
             return DirectResult.failure(this.failure);

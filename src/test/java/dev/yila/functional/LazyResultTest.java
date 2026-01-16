@@ -185,7 +185,7 @@ public class LazyResultTest extends ResultTest {
         Result<Integer> stringLength = hello
                 .flatMap(s -> LazyResult.create(s::toUpperCase))
                 .map(String::toLowerCase)
-                .flatMap(Fun.from(s -> s + "yo"))
+                .map(Fun.from(s -> s + "yo"))
                 .flatMap(s -> LazyResult.create(s::length))
                 .map(size -> size * size);
         assertEquals(49, stringLength.getOrThrow());
@@ -195,9 +195,9 @@ public class LazyResultTest extends ResultTest {
     void canNotUseNullAsSupplierOfFunctions() {
         assertThrows(IllegalArgumentException.class, () -> LazyResult.create(null));
         Result<String> hello = LazyResult.create(() -> ("hello"));
-        assertThrows(IllegalArgumentException.class, () -> hello.map(null));
-        assertThrows(NullPointerException.class, () -> hello.flatMap((Function)null));
-        assertThrows(NullPointerException.class, () -> hello.flatMap((Fun)null));
+        assertThrows(IllegalArgumentException.class, () -> hello.map((Function)null));
+        assertThrows(NullPointerException.class, () -> hello.flatMap(null));
+        assertThrows(NullPointerException.class, () -> hello.map((Fun)null));
     }
 
     @Test

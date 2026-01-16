@@ -218,9 +218,9 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     @Override
-    public <R> Result<R> flatMap(Fun<T, R> fun) {
+    public <R> Result<R> map(Fun<T, R> fun) {
         CompletableFuture<Result<R>> cf = this.completableFuture
-                .thenApply(r -> r.flatMap(fun));
+                .thenApply(r -> r.map(fun));
         return new AsyncResult<>(this.executor, cf);
     }
 

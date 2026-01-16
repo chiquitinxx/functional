@@ -193,31 +193,31 @@ public abstract class ResultTest {
     }
 
     @Test
-    void flatMapFun() {
+    void mapFun() {
         Fun<String, String> upper = Fun.from(String::toUpperCase);
 
-        Result<String> toUpper = string("hello").flatMap(upper);
+        Result<String> toUpper = string("hello").map(upper);
 
         assertEquals("HELLO", toUpper.getOrThrow());
     }
 
     @Test
-    void flatMapFunAfterFailure() {
+    void mapFunAfterFailure() {
         Fun<Integer, Integer> upper = Fun.from(n -> n * 2);
 
-        Result<Integer> twoTimes = failure(Failure.create("error")).flatMap(upper);
+        Result<Integer> twoTimes = failure(Failure.create("error")).map(upper);
 
         assertTrue(twoTimes.hasFailure());
     }
 
     @Test
-    void flatMapFunFailure() {
+    void mapFunFailure() {
         ThrowingFunction<String, String, NullPointerException> function = s -> {
             throw new NullPointerException("null");
         };
         Fun<String, String> upper = Fun.from(function, NullPointerException.class);
 
-        Result<String> result = string("hello").flatMap(upper);
+        Result<String> result = string("hello").map(upper);
 
         assertTrue(result.hasFailure());
     }

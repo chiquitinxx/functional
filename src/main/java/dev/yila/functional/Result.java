@@ -92,7 +92,7 @@ public interface Result<T> {
      * @return
      * @param <R>
      */
-    <R> Result<R> flatMap(Fun<T, R> fun);
+    <R> Result<R> map(Fun<T, R> fun);
 
     /**
      * Flatten map current result with a throwing function that returns a new result.
