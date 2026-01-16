@@ -97,7 +97,7 @@ public class LazyResult<T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);
         return new LazyResult<>(() -> execute().flatMap(function, throwableClass));

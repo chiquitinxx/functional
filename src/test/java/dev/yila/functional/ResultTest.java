@@ -76,8 +76,8 @@ public abstract class ResultTest {
 
     @Test
     void flatMapWithCheckedException() {
-        ThrowingFunction<Integer, Integer, RuntimeException> function =
-                (input) -> input + 2;
+        ThrowingFunction<Integer, Result<Integer>, RuntimeException> function =
+                (input) -> number(input + 2);
         Result<Integer> result = number(6)
                 .flatMap(function, RuntimeException.class);
         assertEquals(8, result.getOrThrow());

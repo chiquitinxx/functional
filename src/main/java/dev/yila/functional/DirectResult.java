@@ -183,13 +183,21 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass) {
         Objects.requireNonNull(function);
         Objects.requireNonNull(throwableClass);
         if (hasFailure()) {
             return DirectResult.failure(this.failure);
         } else {
-            return createChecked(() -> function.apply(this.getOrThrow()), throwableClass);
+            try {
+                return function.apply(this.value);
+            } catch (Throwable throwable) {
+                if (throwableClass.isAssignableFrom(throwable.getClass())) {
+                    return DirectResult.failure(throwable);
+                } else {
+                    throw new RuntimeException(throwable);
+                }
+            }
         }
     }
 

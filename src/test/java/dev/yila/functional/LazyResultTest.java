@@ -131,7 +131,7 @@ public class LazyResultTest extends ResultTest {
     @Test
     void successOnCheckedFlatMap() {
         Result<String> hello = LazyResult.create(() -> ("hello"));
-        Result<String> exceptionHello = hello.flatMap(String::toUpperCase, NullPointerException.class);
+        Result<String> exceptionHello = hello.flatMap(s -> string(s.toUpperCase()), NullPointerException.class);
         assertEquals("HELLO", exceptionHello.getOrThrow());
     }
 

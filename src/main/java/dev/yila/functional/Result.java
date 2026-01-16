@@ -79,20 +79,20 @@ public interface Result<T> {
     <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass);
 
     /**
+     * Map current result with a Fun that returns a new result.
+     * @param fun will be executed if current result is success.
+     * @return
+     * @param <R>
+     */
+    <R> Result<R> map(Fun<T, R> fun);
+
+    /**
      * Flatten map current result with a function that returns a new result.
      * @param function will be executed if current result is success.
      * @return
      * @param <R>
      */
     <R> Result<R> flatMap(Function<T, Result<R>> function);
-
-    /**
-     * Flatten map current result with a Fun that returns a new result.
-     * @param fun will be executed if current result is success.
-     * @return
-     * @param <R>
-     */
-    <R> Result<R> map(Fun<T, R> fun);
 
     /**
      * Flatten map current result with a throwing function that returns a new result.
@@ -102,7 +102,7 @@ public interface Result<T> {
      * @param <R>
      * @param <K>
      */
-    <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, R, K> function, Class<K> throwableClass);
+    <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass);
 
     /**
      * Execute the consumer if the result is success
