@@ -46,14 +46,9 @@ public class AsyncResult <T> implements Result<T> {
         this.executor = executor;
         this.completableFuture = future.handleAsync((result, throwable) -> {
             if (throwable != null) {
-                Throwable cause = throwable.getCause();
-                if (throwableClass.isAssignableFrom(cause.getClass())) {
-                    return DirectResult.failure(cause);
-                } else {
-                    throw new CompletionException(cause);
-                }
+                return DirectResult.failure(throwable.getCause() != null ? throwable.getCause() : throwable);
             }
-            return DirectResult.ok(result);
+            return successResult(result);
         }, executor);
     }
 
@@ -71,7 +66,7 @@ public class AsyncResult <T> implements Result<T> {
             if (throwable != null) {
                 return DirectResult.failure(throwable.getCause());
             }
-            return DirectResult.ok(result);
+            return successResult(result);
         }, executor);
     }
 
@@ -153,12 +148,16 @@ public class AsyncResult <T> implements Result<T> {
     public static <T, F, S> Result<T> inParallel(Executor executor, BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
         ScheduledExecutorService scheduler = TimeoutScheduler.getInstance();
         CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
-        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
-            timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
-        }, timeOut, timeUnit);
 
         CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first, executor);
         CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second, executor);
+
+        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
+            timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
+            //TODO execution is not stopped
+            cfFirst.cancel(true);
+            cfSecond.cancel(true);
+        }, timeOut, timeUnit);
 
         CompletableFuture<Result<T>> result = cfFirst.thenCombine(cfSecond, joinFunction);
 
@@ -240,13 +239,9 @@ public class AsyncResult <T> implements Result<T> {
 
     @Override
     public Result<T> onFailure(Consumer<Failure> consumer) {
-        this.completableFuture.whenComplete((r, t) -> {
-            if (t != null) {
-                consumer.accept(Failure.create(t));
-            } else {
-                r.failure().ifPresent(consumer::accept);
-            }
-        });
+        this.completableFuture.whenComplete((r, t) ->
+            r.failure().ifPresent(consumer::accept)
+        );
         return this;
     }
 
@@ -257,5 +252,13 @@ public class AsyncResult <T> implements Result<T> {
 
     private Result<T> getResult() {
         return this.completableFuture.join();
+    }
+
+    private Result<T> successResult(T result) {
+        try {
+            return DirectResult.ok(result);
+        } catch (IllegalArgumentException i) {
+            return DirectResult.failure(i);
+        }
     }
 }
