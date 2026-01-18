@@ -149,26 +149,6 @@ public class LazyResultTest extends ResultTest {
         assertEquals(1, atomic.get());
     }
 
-    @Test
-    void time() {
-        Supplier<String> supplier = () -> {
-            try { Thread.sleep(100); } catch (InterruptedException ignored) {}
-            return "hello";
-        };
-        LocalDateTime before = LocalDateTime.now();
-        Result<String> first = LazyResult.create(supplier);
-        Result<String> second = LazyResult.create(supplier);
-        Result<String> third = LazyResult.create(supplier);
-
-        Result<String> sequence = Result.sequence((list) -> list.stream()
-                .reduce("", String::concat), first, second, third);
-
-        assertEquals("hellohellohello", sequence.getOrThrow());
-        long millis = ChronoUnit.MILLIS.between(before, LocalDateTime.now());
-        System.out.println("Millis: " + millis);
-        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 150);
-    }
-
     private int add(int number) {
         return add(number);
     }

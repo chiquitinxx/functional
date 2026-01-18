@@ -129,9 +129,9 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
-    public T orElse(Function<Result<T>, T> function) {
+    public T orElse(Function<Failure, T> function) {
         if (this.hasFailure()) {
-            return function.apply(this);
+            return function.apply(this.failure);
         }
         return value;
     }

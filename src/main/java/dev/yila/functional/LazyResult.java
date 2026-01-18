@@ -114,7 +114,7 @@ public class LazyResult<T> implements Result<T> {
     }
 
     @Override
-    public T orElse(Function<Result<T>, T> function) {
+    public T orElse(Function<Failure, T> function) {
         return execute().orElse(function);
     }
 

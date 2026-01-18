@@ -33,7 +33,6 @@ public interface Result<T> {
 
     /**
      * Check the current result has failures.
-     * This is a blocking operation.
      * @return boolean
      */
     boolean hasFailure();
@@ -41,21 +40,19 @@ public interface Result<T> {
     /**
      * Get success result value. Throws an exception if hasFailures.
      * Avoid use this method, embrace more functional style with orElse or chaining.
-     * This is a blocking operation.
      * @return T
      */
     T getOrThrow();
 
     /**
      * Return the success result or the execution of the function if it has failures.
-     * This is a blocking operation.
      * @param function
      * @return T
      */
-    T orElse(Function<Result<T>, T> function);
+    T orElse(Function<Failure, T> function);
 
     /**
-     * Get the failure if exists. It is a blocking operation.
+     * Get the failure if exists.
      * @return
      */
     Optional<Failure> failure();
@@ -120,7 +117,6 @@ public interface Result<T> {
 
     /**
      * Get the value if result is success.
-     * This is a blocking operation.
      * @return
      */
     Optional<T> value();
@@ -133,15 +129,13 @@ public interface Result<T> {
      * @param <T>
      */
     @SafeVarargs
-    static <T> DirectResult<T> sequence(Function<List<T>, T> successSequence, Result<T>... results) {
+    static <T> Result<T> sequence(Function<List<T>, T> successSequence, Result<T>... results) {
         List<Failure> failures = Arrays.stream(results)
-                .parallel()
                 .filter(Result::hasFailure)
                 .map(result -> result.failure().get())
                 .collect(Collectors.toList());
         if (failures.isEmpty()) {
             T res = successSequence.apply(Arrays.stream(results)
-                .parallel()
                     .map(Result::getOrThrow)
                     .collect(Collectors.toList()));
             return DirectResult.ok(res);
