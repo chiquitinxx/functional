@@ -231,6 +231,21 @@ public class DirectResult<T> implements Result<T> {
         return Optional.of(value);
     }
 
+    /**
+     * Unwrap optional
+     * @param result
+     * @return
+     * @param <U>
+     */
+    static <U> DirectResult<U> join(Result<Optional<U>> result) {
+        if (result.hasFailure()) {
+            return DirectResult.failure(result.failure().get());
+        } else {
+            Optional<U> value = result.getOrThrow();
+            return DirectResult.createChecked(value::get, NoSuchElementException.class);
+        }
+    }
+
     private DirectResult(T value, Failure failure) {
         this.value = value;
         this.failure = failure;

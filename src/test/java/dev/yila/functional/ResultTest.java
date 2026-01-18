@@ -22,7 +22,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static dev.yila.functional.Result.join;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class ResultTest {
@@ -164,32 +163,6 @@ public abstract class ResultTest {
         assertEquals("good", good.value().get());
         assertFalse(failure.value().isPresent());
         assertEquals("failure: result", failure.failure().get().toString());
-    }
-
-    @Test
-    void joinFromFailure() {
-        Result failure = failure(new SimpleFailure());
-        Result<String> result = join(failure);
-
-        assertTrue(result.hasFailure());
-        assertTrue(result.failure().get() instanceof SimpleFailure);
-    }
-
-    @Test
-    void removeEmptyOptional() {
-        Result<Optional<String>> empty = optional(Optional.empty());
-        Result<String> result = join(empty);
-
-        assertTrue(result.hasFailure());
-        assertTrue(result.failure().get().toThrowable() instanceof NoSuchElementException);
-    }
-
-    @Test
-    void removePresentOptional() {
-        Result<Optional<String>> present = optional(Optional.of("hello"));
-        Result<String> result = join(present);
-
-        assertEquals("hello", result.getOrThrow());
     }
 
     @Test

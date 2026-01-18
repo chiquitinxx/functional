@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static dev.yila.functional.DirectResult.join;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DirectResultTest extends ResultTest {
@@ -129,6 +130,32 @@ public class DirectResultTest extends ResultTest {
         Result result = DirectResult.failure("error message");
         DescriptionFailure failure = (DescriptionFailure) result.failure().get();
         assertEquals("error message", failure.toString());
+    }
+
+    @Test
+    void joinFromFailure() {
+        Result failure = failure(new SimpleFailure());
+        Result<String> result = join(failure);
+
+        assertTrue(result.hasFailure());
+        assertTrue(result.failure().get() instanceof SimpleFailure);
+    }
+
+    @Test
+    void removeEmptyOptional() {
+        Result<Optional<String>> empty = optional(Optional.empty());
+        Result<String> result = join(empty);
+
+        assertTrue(result.hasFailure());
+        assertTrue(result.failure().get().toThrowable() instanceof NoSuchElementException);
+    }
+
+    @Test
+    void removePresentOptional() {
+        Result<Optional<String>> present = optional(Optional.of("hello"));
+        DirectResult<String> result = join(present);
+
+        assertEquals("hello", result.getOrThrow());
     }
 
     static class TestException extends Exception {}
