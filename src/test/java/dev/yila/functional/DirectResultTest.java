@@ -158,6 +158,20 @@ public class DirectResultTest extends ResultTest {
         assertEquals("hello", result.getOrThrow());
     }
 
+    @Test
+    void sequenceResults() {
+        Result<Integer> sequenceFailure = DirectResult.sequence(list -> list.get(0),
+                number(5),
+                failure(CodeDescriptionFailure.create(CODE, DESCRIPTION)));
+        assertTrue(sequenceFailure.hasFailure());
+        Result<Integer> sequence = DirectResult.sequence(list ->
+                        list.stream().reduce(0, Integer::sum),
+                number(5),
+                number(4),
+                number(3));
+        assertEquals(12, sequence.getOrThrow());
+    }
+
     static class TestException extends Exception {}
 
     static class SomeFailure implements Failure {

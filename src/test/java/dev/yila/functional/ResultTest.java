@@ -36,7 +36,7 @@ public abstract class ResultTest {
         result.onSuccess(number -> assertEquals(5, number));
         result.onFailure(r -> fail("never executed"));
         assertEquals(5, result.getOrThrow());
-        assertEquals(5, result.orElse(r -> 0));
+        assertEquals(5, result.orElseGet(() -> 0));
     }
 
     @Test
@@ -54,7 +54,7 @@ public abstract class ResultTest {
         assertTrue(result.hasFailure());
         result.onSuccess(number -> fail("never executed"));
         result.onFailure(f -> assertEquals(result.failure().get(), f));
-        assertEquals(0, result.orElse(r -> 0));
+        assertEquals(0, result.orElseGet(() -> 0));
         assertThrows(NoSuchElementException.class, result::getOrThrow);
     }
 
@@ -109,20 +109,6 @@ public abstract class ResultTest {
         Result<Integer> result = number(3)
                 .map(throwingFunction, RuntimeException.class);
         assertTrue(result.failure().get().toString().endsWith("ThrowableFailure: java.lang.RuntimeException: Fail"));
-    }
-
-    @Test
-    void sequenceResults() {
-        Result<Integer> sequenceFailure = Result.sequence(list -> list.get(0),
-                number(5),
-                failure(CodeDescriptionFailure.create(CODE, DESCRIPTION)));
-        assertTrue(sequenceFailure.hasFailure());
-        Result<Integer> sequence = Result.sequence(list ->
-                        list.stream().reduce(0, Integer::sum),
-                number(5),
-                number(4),
-                number(3));
-        assertEquals(12, sequence.getOrThrow());
     }
 
     @Test

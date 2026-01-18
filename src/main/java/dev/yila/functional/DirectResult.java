@@ -19,6 +19,7 @@ import dev.yila.functional.failure.MultipleFailures;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Class to store the direct result value or the failure.
@@ -129,14 +130,6 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
-    public T orElse(Function<Failure, T> function) {
-        if (this.hasFailure()) {
-            return function.apply(this.failure);
-        }
-        return value;
-    }
-
-    @Override
     public Optional<Failure> failure() {
         return Optional.ofNullable(this.failure);
     }
@@ -232,12 +225,35 @@ public class DirectResult<T> implements Result<T> {
     }
 
     /**
+     * Sequence multiple Results in one DirectResult.
+     * @param successSequence function to combine the list of results
+     * @param results list of results
+     * @return DirectResult
+     * @param <T> Type of the value
+     */
+    @SafeVarargs
+    public static <T> DirectResult<T> sequence(Function<List<T>, T> successSequence, Result<T>... results) {
+        List<Failure> failures = Arrays.stream(results)
+                .filter(Result::hasFailure)
+                .map(result -> result.failure().get())
+                .collect(Collectors.toList());
+        if (failures.isEmpty()) {
+            T res = successSequence.apply(Arrays.stream(results)
+                    .map(Result::getOrThrow)
+                    .collect(Collectors.toList()));
+            return DirectResult.ok(res);
+        } else {
+            return DirectResult.failures(failures);
+        }
+    }
+
+    /**
      * Unwrap optional
      * @param result
      * @return
      * @param <U>
      */
-    static <U> DirectResult<U> join(Result<Optional<U>> result) {
+    public static <U> DirectResult<U> join(Result<Optional<U>> result) {
         if (result.hasFailure()) {
             return DirectResult.failure(result.failure().get());
         } else {

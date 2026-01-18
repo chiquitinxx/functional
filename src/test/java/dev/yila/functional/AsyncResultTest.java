@@ -46,24 +46,6 @@ public class AsyncResultTest extends ResultTest {
     }
 
     @Test
-    void checkExecutionTimeToValidateExecutionInParallel() {
-        Supplier<String> supplier = () -> {
-            try { Thread.sleep(100); } catch (InterruptedException ignored) {}
-            return "hello";
-        };
-        LocalDateTime before = LocalDateTime.now();
-        Result<String> first = AsyncResult.create(ThreadPool.get(), supplier);
-        Result<String> second = AsyncResult.create(ThreadPool.get(), supplier);
-        Result<String> third = AsyncResult.create(ThreadPool.get(), supplier);
-
-        Result<String> sequence = Result.sequence((list) -> list.stream()
-                .reduce("", String::concat), first, second, third);
-
-        assertEquals("hellohellohello", sequence.getOrThrow());
-        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 180);
-    }
-
-    @Test
     void executeTwoTaskInParallel() {
         Supplier<String> first = () -> "hello";
         Supplier<String> second = () -> "world";

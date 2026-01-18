@@ -15,12 +15,15 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * An asynchronous implementation of Result that uses CompletableFuture for
@@ -184,11 +187,6 @@ public class AsyncResult <T> implements Result<T> {
     @Override
     public T getOrThrow() {
         return getResult().getOrThrow();
-    }
-
-    @Override
-    public T orElse(Function<Failure, T> function) {
-        return getResult().orElse(function);
     }
 
     @Override

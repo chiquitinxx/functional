@@ -14,14 +14,11 @@
 package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
-import dev.yila.functional.failure.MultipleFailures;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 /**
  * Class to store the result value or the failure.
@@ -44,11 +41,13 @@ public interface Result<T> {
     T getOrThrow();
 
     /**
-     * Return the success result or the execution of the function if it has failures.
-     * @param function
+     * Return the success result or the execution of the supplier if it has failures.
+     * @param supplier default value supplier
      * @return T
      */
-    T orElse(Function<Failure, T> function);
+    default T orElseGet(Supplier<T> supplier) {
+        return hasFailure() ? supplier.get() : getOrThrow();
+    }
 
     /**
      * Get the failure if exists.
@@ -119,27 +118,4 @@ public interface Result<T> {
      * @return
      */
     Optional<T> value();
-
-    /**
-     * Sequence multiple Results in one Result.
-     * @param successSequence
-     * @param results
-     * @return
-     * @param <T>
-     */
-    @SafeVarargs
-    static <T> Result<T> sequence(Function<List<T>, T> successSequence, Result<T>... results) {
-        List<Failure> failures = Arrays.stream(results)
-                .filter(Result::hasFailure)
-                .map(result -> result.failure().get())
-                .collect(Collectors.toList());
-        if (failures.isEmpty()) {
-            T res = successSequence.apply(Arrays.stream(results)
-                    .map(Result::getOrThrow)
-                    .collect(Collectors.toList()));
-            return DirectResult.ok(res);
-        } else {
-            return DirectResult.failure(new MultipleFailures(failures));
-        }
-    }
 }

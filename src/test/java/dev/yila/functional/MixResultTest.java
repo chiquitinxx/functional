@@ -28,7 +28,7 @@ public class MixResultTest {
         Result<String> async = AsyncResult.create(ThreadPool.get(), () -> "async");
         Result<String> lazy = LazyResult.create(() -> "lazy");
 
-        Result<String> result = Result.sequence(list -> {
+        Result<String> result = DirectResult.sequence(list -> {
             StringBuilder all = new StringBuilder();
             list.forEach(all::append);
             return all.toString();

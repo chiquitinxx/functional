@@ -50,7 +50,7 @@ public class Validation {
         List<Result> results = Arrays.stream(validations)
                 .map(pair -> validate(value, pair.getLeft(), pair.getRight()))
                 .collect(Collectors.toList());
-        return Result.sequence(list -> list.get(0), results.toArray(new Result[results.size()]));
+        return DirectResult.sequence(list -> list.get(0), results.toArray(new Result[results.size()]));
     }
 
     /**
