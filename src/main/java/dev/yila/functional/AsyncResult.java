@@ -15,15 +15,12 @@ package dev.yila.functional;
 
 import dev.yila.functional.failure.Failure;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * An asynchronous implementation of Result that uses CompletableFuture for
@@ -210,8 +207,14 @@ public class AsyncResult <T> implements Result<T> {
 
     @Override
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
-        CompletableFuture<Result<R>> cf = this.completableFuture
-                .thenApply(r -> r.flatMap(function));
+        CompletableFuture<Result<R>> cf = this.completableFuture.thenCompose(r -> {
+            Result<R> mapped = r.flatMap(function);
+            if (mapped instanceof AsyncResult) {
+                return ((AsyncResult<R>) mapped).completableFuture;
+            } else {
+                return CompletableFuture.completedFuture(mapped);
+            }
+        });
         return new AsyncResult<>(this.executor, cf);
     }
 
@@ -224,8 +227,14 @@ public class AsyncResult <T> implements Result<T> {
 
     @Override
     public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass) {
-        CompletableFuture<Result<R>> cf = this.completableFuture
-                .thenApply(r -> r.flatMap(function, throwableClass));
+        CompletableFuture<Result<R>> cf = this.completableFuture.thenCompose(r -> {
+            Result<R> mapped = r.flatMap(function, throwableClass);
+            if (mapped instanceof AsyncResult) {
+                return ((AsyncResult<R>) mapped).completableFuture;
+            } else {
+                return CompletableFuture.completedFuture(mapped);
+            }
+        });
         return new AsyncResult<>(this.executor, cf);
     }
 

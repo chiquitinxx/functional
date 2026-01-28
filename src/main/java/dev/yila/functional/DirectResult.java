@@ -161,7 +161,7 @@ public class DirectResult<T> implements Result<T> {
         if (hasFailure()) {
             return DirectResult.failure(this.failure);
         } else {
-            return function.apply(this.value);
+            return Objects.requireNonNull(function.apply(this.value), "The flatMap function must not return null");
         }
     }
 
