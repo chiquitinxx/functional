@@ -122,7 +122,11 @@ public class LazyResult<T> implements Result<T> {
         if (result == null) {
             synchronized (this) {
                 if (result == null) {
-                    result = this._supplier.get();
+                    try {
+                        result = this._supplier.get();
+                    } catch (Exception e) {
+                        result = DirectResult.failure(e);
+                    }
                 }
             }
         }
