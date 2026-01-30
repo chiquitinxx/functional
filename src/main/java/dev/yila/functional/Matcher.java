@@ -87,12 +87,20 @@ public class Matcher<I, O> {
         this.matchers = Collections.EMPTY_LIST;
     }
 
+    private Matcher(List<Pair<Function<I, Boolean>, Function<I, O>>> matchers, Function<I, O> function) {
+        this.matchers = matchers;
+        this.defaultCase = (input) -> DirectResult.ok(function.apply(input));
+    }
+
     private Matcher(Function<I, Boolean> matchFunction, Function<I, O> outputFunction) {
         this.matchers = Collections.singletonList(new Pair<>(matchFunction, outputFunction));
     }
 
-    private Matcher(List<Pair<Function<I, Boolean>, Function<I, O>>> matchers, Pair<Function<I, Boolean>, Function<I, O>> pair) {
+    private Matcher(List<Pair<Function<I, Boolean>, Function<I, O>>> matchers,
+                    Pair<Function<I, Boolean>, Function<I, O>> pair,
+                    Function<I, DirectResult<O>> defaultCase) {
         this.matchers = Stream.concat(matchers.stream(), Stream.of(pair)).collect(Collectors.toList());
+        this.defaultCase = defaultCase;
     }
 
     /**
@@ -103,7 +111,7 @@ public class Matcher<I, O> {
      * @return a new matcher with the additional case
      */
     public Matcher<I, O> on(Function<I, Boolean> matchFunction, Function<I, O> outputFunction) {
-        return new Matcher<>(this.matchers, Pair.of(matchFunction, outputFunction));
+        return new Matcher<>(this.matchers, Pair.of(matchFunction, outputFunction), this.defaultCase);
     }
 
     /**
@@ -114,7 +122,7 @@ public class Matcher<I, O> {
      * @return a new matcher with the default case
      */
     public Matcher<I, O> orElse(Function<I, O> function) {
-        return new Matcher<>(this.matchers, Pair.of(input -> true, function));
+        return new Matcher<>(this.matchers, function);
     }
 
     /**
