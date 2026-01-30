@@ -4,4 +4,5 @@ target
 .git
 .DS_Store
 build
+.serena
 
