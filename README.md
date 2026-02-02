@@ -140,23 +140,49 @@ Optional<String> result2 = numberMatcher.eval(5); // Optional.of("More than two"
 Optional<String> result3 = numberMatcher.eval(0); // Optional.empty()
 ```
 
-### `Agent<T>`
+### `Validation`
 
-A thread-safe container that holds a value and ensures that all modifications to that value are executed sequentially and safely in a concurrent environment.
+A utility class for validating values against one or multiple criteria. It returns a `Result` that either contains the valid value or a `Failure` indicating which validation rule failed.
 
 **Usage:**
 
 ```java
-// Create an agent with an initial value
-Agent<Integer> counter = Agent.create(0);
+Failure tooShort = new DescriptionFailure("Must be at least 5 characters");
+Failure noNumber = new DescriptionFailure("Must contain a number");
 
-// Send functions to update the value asynchronously and thread-safely
-// For example, in a multi-threaded environment:
+// Validate a value against multiple rules using Pairs
+Result<String> result = Validation.validate("pass1",
+    Pair.of(tooShort, s -> s.length() >= 5),
+    Pair.of(noNumber, s -> s.matches(".*\\d.*"))
+);
+
+// Single validation
+Result<Integer> ageResult = Validation.validate(25, 
+    new DescriptionFailure("Must be an adult"), 
+    age -> age >= 18
+);
+```
+
+### `Agent<T>`
+
+A thread-safe container that implements the Actor model. It holds a value and ensures that all modifications to that value are executed sequentially and safely in a concurrent environment using a non-blocking queue.
+
+**Usage:**
+
+```java
+ExecutorService executor = Executors.newFixedThreadPool(4);
+Agent<Integer> counter = Agent.create(executor, 0);
+
 for (int i = 0; i < 1000; i++) {
+    //Update functions are executed async in order
     Agent.update(counter, value -> value + 1);
 }
 
-Integer finalCount = Agent.get(counter); // 1000
+Result<Integer> result = Agent.get(counter);
+System.out.println(result.getOrThrow()); // 1000
+
+// Set a maximum size of the allowed functions in the queue 
+Agent<Integer> boundedCounter = Agent.create(executor, 0, 100);
 ```
 
 ## Dependencies

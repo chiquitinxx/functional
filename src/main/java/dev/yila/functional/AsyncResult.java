@@ -40,7 +40,6 @@ public class AsyncResult <T> implements Result<T> {
      * 
      * @param executor the executor to use for async operations
      * @param future the completable future
-     * @param throwableClass the class of the checked exception that may be thrown
      */
     private AsyncResult(Executor executor, CompletableFuture<T> future, Class<? extends Throwable> throwableClass) {
         this.executor = executor;
@@ -90,6 +89,18 @@ public class AsyncResult <T> implements Result<T> {
      */
     public static <T> AsyncResult<T> create(Executor executor, Supplier<T> supplier) {
         return new AsyncResult<>(executor, supplier);
+    }
+
+    /**
+     * Creates a new AsyncResult from an existing CompletableFuture.
+     *
+     * @param executor the executor to use for async operations
+     * @param future the completable future
+     * @param <T> the type of the result value
+     * @return a new AsyncResult
+     */
+    public static <T> AsyncResult<T> of(Executor executor, CompletableFuture<T> future) {
+        return new AsyncResult<>(executor, future, Throwable.class);
     }
 
     /**

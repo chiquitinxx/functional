@@ -13,8 +13,10 @@
  */
 package dev.yila.functional;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -23,14 +25,29 @@ import java.util.function.Function;
  */
 public class Agent<T> {
 
+    static final Integer DEFAULT_MAX_CAPACITY = 10_000;
+
     /**
      *
+     * @param executor
      * @param initialValue
      * @return
      * @param <T>
      */
-    public static <T> Agent<T> create(T initialValue) {
-        return new Agent<>(initialValue);
+    public static <T> Agent<T> create(Executor executor, T initialValue) {
+        return new Agent<>(executor, initialValue, DEFAULT_MAX_CAPACITY);
+    }
+
+    /**
+     *
+     * @param executor
+     * @param initialValue
+     * @param maxCapacity
+     * @return
+     * @param <T>
+     */
+    public static <T> Agent<T> create(Executor executor, T initialValue, int maxCapacity) {
+        return new Agent<>(executor, initialValue, maxCapacity);
     }
 
     /**
@@ -39,7 +56,7 @@ public class Agent<T> {
      * @return
      * @param <T>
      */
-    public static <T> T get(Agent<T> agent) {
+    public static <T> AsyncResult<T> get(Agent<T> agent) {
         return agent.getValue();
     }
 
@@ -50,32 +67,60 @@ public class Agent<T> {
      * @param <T>
      */
     public static <T> void update(Agent<T> agent, Function<T, T> function) {
-        agent.changeValue(function);
+        agent.addFunction(function);
     }
 
-    private final Lock lock;
-    private T value;
+    private final Executor executor;
+    private final int maxCapacity;
+    private volatile T value;
+    private final ConcurrentLinkedQueue<Function<T, T>> mailbox = new ConcurrentLinkedQueue<>();
+    private final AtomicInteger wip = new AtomicInteger(0);
+    private final AtomicInteger size = new AtomicInteger(0);
 
-    private Agent(T initialValue) {
+    private Agent(Executor executor, T initialValue, int maxCapacity) {
+        this.executor = executor;
         this.value = initialValue;
-        this.lock = new ReentrantLock();
+        this.maxCapacity = maxCapacity;
     }
 
-    private T getValue() {
-        lock.lock();
-        try {
-            return this.value;
-        } finally {
-            lock.unlock();
+    private AsyncResult<T> getValue() {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        addFunction(current -> {
+            future.complete(current);
+            return current;
+        });
+        return AsyncResult.of(executor, future);
+    }
+
+    private void addFunction(Function<T, T> updateFunction) {
+        if (size.get() >= maxCapacity) {
+            throw new IllegalStateException("Agent mailbox is full");
+        }
+        size.incrementAndGet();
+        mailbox.offer(updateFunction);
+        drain();
+    }
+
+    private void drain() {
+        if (wip.getAndIncrement() == 0) {
+            executor.execute(this::runLoop);
         }
     }
 
-    private void changeValue(Function<T, T> function) {
-        lock.lock();
-        try {
-            this.value = function.apply(this.value);
-        } finally {
-            lock.unlock();
-        }
+    private void runLoop() {
+        int missed = 1;
+        do {
+            Function<T, T> update;
+            while ((update = mailbox.poll()) != null) {
+                try {
+                    this.value = update.apply(this.value);
+                } catch (Exception e) {
+                    // Ignore exception
+                } finally {
+                    size.decrementAndGet();
+                }
+            }
+            missed = wip.addAndGet(-missed);
+        } while (missed != 0);
     }
 }
