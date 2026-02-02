@@ -42,18 +42,13 @@ This allows you to swap execution models (e.g., moving a heavy calculation from 
 #### Synchronous Usage
 
 ```java
-// Creating a success result
 Result<Integer> success = DirectResult.ok(100);
-
-// Creating a failure result
 Result<Integer> failure = DirectResult.failure(new DescriptionFailure("Something went wrong"));
 
-// Chaining operations with map and flatMap
 Result<String> finalResult = success
     .map(value -> value * 2) // Returns Result.ok(200)
     .flatMap(value -> DirectResult.ok("Final value: " + value));
 
-// Getting the value
 String resultString = finalResult.getOrThrow(); // "Final value: 200"
 Integer errorCase = failure.orElse(f -> -1);    // -1
 ```
@@ -63,25 +58,19 @@ Integer errorCase = failure.orElse(f -> -1);    // -1
 When performing asynchronous operations, you are responsible for providing and managing an `ExecutorService`. This gives you full control over your application's concurrency model.
 
 ```java
-// 1. Create and manage your own ExecutorService
 ExecutorService executor = Executors.newFixedThreadPool(4);
 
 try {
-    // 2. Use the executor to create an AsyncResult
     Supplier<Integer> longRunningTask = () -> {
         // ... some computation ...
         return 200;
     };
     Result<Integer> asyncResult = AsyncResult.create(executor, longRunningTask);
 
-    // map, flatMap, and other operations are non-blocking
     Result<String> finalAsyncResult = asyncResult
         .map(value -> "The value is: " + value);
-
-    // 3. Block to get the result when you need it
     System.out.println(finalAsyncResult.getOrThrow()); // "The value is: 200"
 
-    // 4. Example with inParallel
     Result<String> parallelResult = Result.inParallel(
         executor,
         (s1, s2) -> DirectResult.ok(s1 + " " + s2), // Join function
@@ -92,9 +81,31 @@ try {
     System.out.println(parallelResult.getOrThrow()); // "Hello World"
 
 } finally {
-    // 5. Always shut down your executor
     executor.shutdown();
 }
+```
+
+#### Lazy Usage with `LazyResult`
+
+`LazyResult` defers the execution of the supplier and all chained functions until the value is explicitly requested (e.g., via `getOrThrow()`). It also memoizes the result once computed.
+
+```java
+AtomicInteger counter = new AtomicInteger(0);
+
+Result<Integer> lazy = LazyResult.create(() -> {
+    counter.incrementAndGet();
+    return 10;
+});
+
+Result<Integer> mapped = lazy.map(v -> v * 2);
+System.out.println(counter.get()); // 0
+        
+System.out.println(mapped.getOrThrow()); // 20
+System.out.println(counter.get());       // 1
+
+// The result is memoized; subsequent calls won't re-run the supplier
+System.out.println(lazy.getOrThrow());   // 10
+System.out.println(counter.get());       // 1
 ```
 
 ### `Fun<Input, Output>` and `Fun2<Input1, Input2, Output>`
