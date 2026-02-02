@@ -93,10 +93,10 @@ public class Agent<T> {
     }
 
     private void addFunction(Function<T, T> updateFunction) {
-        if (size.get() >= maxCapacity) {
+        if (size.incrementAndGet() > maxCapacity) {
+            size.decrementAndGet();
             throw new IllegalStateException("Agent mailbox is full");
         }
-        size.incrementAndGet();
         mailbox.offer(updateFunction);
         drain();
     }
