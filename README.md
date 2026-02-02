@@ -29,11 +29,15 @@ Integer age = person.getThird();   // 30
 
 An interface that represents the result of an operation, which can be either a success (holding a value of type `T`) or a failure (holding a `Failure` object). It combines the safety of `Optional` with the error-handling capabilities of `Either`.
 
-It has three implementations:
+#### Polymorphic Execution (Unique Feature)
 
-1.  **`DirectResult<T>`**: A synchronous, immediate result.
-2.  **`AsyncResult<T>`**: An asynchronous result, backed by `CompletableFuture`. For all async operations, you must provide your own `ExecutorService`.
-3.  **`LazyResult<T>`**: A lazy-evaluated result that only computes its value when it's needed.
+Unlike most libraries that force you to choose a different API for sync and async code (e.g., `Optional` vs `CompletableFuture`), this library provides a **unified abstraction**. You can write your business logic against the `Result` interface, and it remains agnostic to *how* or *when* the computation occurs:
+
+1.  **`DirectResult<T>`**: Synchronous, immediate execution.
+2.  **`AsyncResult<T>`**: Asynchronous execution (non-blocking).
+3.  **`LazyResult<T>`**: Deferred execution (computed only when accessed).
+
+This allows you to swap execution models (e.g., moving a heavy calculation from sync to async) without changing the functional pipelines (`map`, `flatMap`) of your service.
 
 #### Synchronous Usage
 
