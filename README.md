@@ -1,4 +1,5 @@
 [![Coverage Status](https://coveralls.io/repos/github/chiquitinxx/functional/badge.svg?branch=main)](https://coveralls.io/github/chiquitinxx/functional?branch=main)
+[![javadoc](https://javadoc.io/badge2/dev.yila/functional/javadoc.svg)](https://javadoc.io/doc/dev.yila/functional)
 
 # functional
 
