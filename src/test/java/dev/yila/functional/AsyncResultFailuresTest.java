@@ -3,8 +3,9 @@ package dev.yila.functional;
 import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.CompletionException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AsyncResultFailuresTest {
 
@@ -29,7 +30,16 @@ public class AsyncResultFailuresTest {
                 .flatMap(s -> {throw new RuntimeException("yup");});
 
         assertTrue(failedResult.hasFailure(), "Should have failure");
-        assertEquals("yup", failedResult.failure().get().toThrowable()
-                .getCause().getMessage(), "Should have original failure before map");
+        assertEquals("yup", failedResult.failure().get().toException()
+                .getMessage(), "Should have original failure before map");
+    }
+
+    @Test
+    void errorsAreNotCaptured() {
+        Result<String> error = AsyncResult.create(ThreadPool.get(), () -> {
+            throw new StackOverflowError();
+        });
+
+        assertThrows(CompletionException.class, error::getOrThrow);
     }
 }

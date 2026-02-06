@@ -14,32 +14,32 @@
 package dev.yila.functional.failure;
 
 /**
- * A failure that wraps a Throwable.
+ * A failure that wraps a Exception.
  */
-public class ThrowableFailure implements Failure {
+public class ExceptionFailure implements Failure {
 
-    private final Throwable throwable;
+    private final Exception exception;
 
     /**
-     * Creates a new ThrowableFailure.
+     * Creates a new ExceptionFailure.
      * 
-     * @param throwable the throwable to wrap
+     * @param exception the exception to wrap
      */
-    public ThrowableFailure(Throwable throwable) {
-        this.throwable = throwable;
+    public ExceptionFailure(Exception exception) {
+        this.exception = exception;
     }
 
     /**
-     * Returns the wrapped throwable.
+     * Returns the wrapped exception.
      * 
-     * @return the wrapped throwable
+     * @return the wrapped exception
      */
-    public Throwable getThrowable() {
-        return this.throwable;
+    public Exception getException() {
+        return this.exception;
     }
 
     @Override
     public String toString() {
-        return "ThrowableFailure: " + throwable.getClass().getName() + ": " + throwable.getMessage();
+        return "ExceptionFailure: " + exception.getClass().getName() + ": " + exception.getMessage();
     }
 }

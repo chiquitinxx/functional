@@ -42,7 +42,7 @@ public class AsyncResultTest extends ResultTest {
         });
         assertTrue(result.hasFailure());
         Failure failure = result.failure().get();
-        assertEquals(runtimeException, failure.toThrowable());
+        assertEquals(runtimeException, failure.toException());
     }
 
     @Test
@@ -74,7 +74,7 @@ public class AsyncResultTest extends ResultTest {
 
         Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
-        assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
+        assertEquals("world is down", result.failure().get().toException().getMessage());
     }
 
     @Test
@@ -86,7 +86,7 @@ public class AsyncResultTest extends ResultTest {
 
         Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
 
-        assertEquals("world is down", result.failure().get().toThrowable().getCause().getMessage());
+        assertEquals("world is down", result.failure().get().toException().getMessage());
     }
 
     @Test
@@ -99,7 +99,7 @@ public class AsyncResultTest extends ResultTest {
         Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second,
                 200, TimeUnit.MILLISECONDS);
 
-        assertEquals("AsyncResult inParallel timeOut", result.failure().get().toThrowable().getMessage());
+        assertEquals("AsyncResult inParallel timeOut", result.failure().get().toException().getMessage());
     }
 
     @Test
@@ -131,7 +131,7 @@ public class AsyncResultTest extends ResultTest {
 
     @Test
     void createCheckedAsync() {
-        ThrowingSupplier<String, TestException> supplier = () -> "hello";
+        ExceptionSupplier<String, TestException> supplier = () -> "hello";
         Result<String> result = AsyncResult.createChecked(ThreadPool.get(), supplier, TestException.class);
 
         assertEquals("hello", result.getOrThrow());
@@ -139,17 +139,17 @@ public class AsyncResultTest extends ResultTest {
 
     @Test
     void checkedAsyncThrowingExpectedException() {
-        ThrowingSupplier<String, TestException> supplier = () -> {
+        ExceptionSupplier<String, TestException> supplier = () -> {
             throw new TestException();
         };
         Result<String> result = AsyncResult.createChecked(ThreadPool.get(), supplier, TestException.class);
 
-        assertEquals(TestException.class, result.failure().get().toThrowable().getClass());
+        assertEquals(TestException.class, result.failure().get().toException().getClass());
     }
 
     @Test
     void checkedAsyncThrowingUnExpectedException() {
-        ThrowingSupplier<String, TestException> supplier = () -> {
+        ExceptionSupplier<String, TestException> supplier = () -> {
             throw new RuntimeException("hey");
         };
 
@@ -184,9 +184,9 @@ public class AsyncResultTest extends ResultTest {
     }
 
     @Override
-    <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz) {
-        ThrowingSupplier<Integer, E> supplier = () -> {
-            throw throwable;
+    <E extends Exception> Result<Integer> failure(E exception, Class<E> clazz) {
+        ExceptionSupplier<Integer, E> supplier = () -> {
+            throw exception;
         };
         return AsyncResult.createChecked(ThreadPool.get(), supplier, clazz);
     }

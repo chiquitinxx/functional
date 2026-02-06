@@ -55,11 +55,11 @@ public class ValidationTest {
     @Test
     void invalidValidations() {
         assertThrows(IllegalArgumentException.class, () -> Validation.validate(
-                null, Failure.create(new Throwable()), b -> true));
+                null, Failure.create(new Exception()), b -> true));
         assertThrows(IllegalArgumentException.class, () -> Validation.validate(
                 "value", null, b -> true));
         assertThrows(IllegalArgumentException.class, () -> Validation.validate(
-                "value", Failure.create(new Throwable()), null));
+                "value", Failure.create(new Exception()), null));
         assertThrows(IllegalArgumentException.class, () -> Validation.validate(null));
         assertThrows(IllegalArgumentException.class, () -> Validation.validate(
                 "value", null));

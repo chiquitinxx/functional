@@ -27,23 +27,23 @@ public class MultipleFailuresTest {
     public void multiple() {
         List<Failure> list = new ArrayList<>();
         list.add(CodeDescriptionFailure.create("code", "description"));
-        Throwable throwable = new RuntimeException();
-        list.add(new ThrowableFailure(throwable));
+        Exception throwable = new RuntimeException();
+        list.add(new ExceptionFailure(throwable));
 
         MultipleFailures failures = new MultipleFailures(list);
-        assertSame(throwable, failures.getFailures().get(1).toThrowable());
+        assertSame(throwable, failures.getFailures().get(1).toException());
         assertEquals("code: description", failures.getFailures()
-                .get(0).toThrowable().getMessage());
+                .get(0).toException().getMessage());
     }
 
     @Test
-    public void multipleToThrowable() {
+    public void multipleToException() {
         List<Failure> list = new ArrayList<>();
         list.add(CodeDescriptionFailure.create("code", "description"));
-        list.add(new ThrowableFailure(new RuntimeException("Fail :(")));
+        list.add(new ExceptionFailure(new RuntimeException("Fail :(")));
 
         MultipleFailures failures = new MultipleFailures(list);
-        Throwable throwable = failures.toThrowable();
+        Throwable throwable = failures.toException();
         assertEquals("code: description", throwable.getMessage());
         assertEquals("Fail :(", throwable.getSuppressed()[0].getMessage());
     }

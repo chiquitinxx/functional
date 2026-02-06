@@ -68,16 +68,16 @@ public class DirectResult<T> implements Result<T> {
     }
 
     /**
-     * Create a new failure result from a throwable.
-     * @param throwable
+     * Create a new failure result from a exception.
+     * @param exception
      * @return
      * @param <T>
      */
-    public static <T> DirectResult<T> failure(Throwable throwable) {
-        if (throwable == null) {
+    public static <T> DirectResult<T> failure(Exception exception) {
+        if (exception == null) {
             throw new IllegalArgumentException("Fail can not be null.");
         }
-        return new DirectResult<>(null, Failure.create(throwable));
+        return new DirectResult<>(null, Failure.create(exception));
     }
 
     /**
@@ -95,20 +95,20 @@ public class DirectResult<T> implements Result<T> {
 
     /**
      * Create a Result from a supplier with a checked exception
-     * @param throwingSupplier
-     * @param throwableClass
+     * @param exceptionSupplier
+     * @param exceptionClass
      * @return
      * @param <T>
      * @param <K>
      */
-    public static <T, K extends Throwable> DirectResult<T> createChecked(ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
+    public static <T, K extends Exception> DirectResult<T> createChecked(ExceptionSupplier<T, K> exceptionSupplier, Class<K> exceptionClass) {
         try {
-            return new DirectResult<>(throwingSupplier.get(), null);
-        } catch (Throwable throwable) {
-            if (throwableClass.isAssignableFrom(throwable.getClass())) {
-                return DirectResult.failure(throwable);
+            return new DirectResult<>(exceptionSupplier.get(), null);
+        } catch (Exception exception) {
+            if (exceptionClass.isAssignableFrom(exception.getClass())) {
+                return DirectResult.failure(exception);
             } else {
-                throw new RuntimeException(throwable);
+                throw new RuntimeException(exception);
             }
         }
     }
@@ -145,13 +145,13 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Exception> Result<R> map(ExceptionFunction<T, R, K> function, Class<K> exceptionClass) {
         Objects.requireNonNull(function);
-        Objects.requireNonNull(throwableClass);
+        Objects.requireNonNull(exceptionClass);
         if (hasFailure()) {
             return DirectResult.failure(this.failure);
         } else {
-            return createChecked(() -> function.apply(this.getOrThrow()), throwableClass);
+            return createChecked(() -> function.apply(this.getOrThrow()), exceptionClass);
         }
     }
 
@@ -176,19 +176,19 @@ public class DirectResult<T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass) {
+    public <R, K extends Exception> Result<R> flatMap(ExceptionFunction<T, Result<R>, K> function, Class<K> exceptionClass) {
         Objects.requireNonNull(function);
-        Objects.requireNonNull(throwableClass);
+        Objects.requireNonNull(exceptionClass);
         if (hasFailure()) {
             return DirectResult.failure(this.failure);
         } else {
             try {
                 return function.apply(this.value);
-            } catch (Throwable throwable) {
-                if (throwableClass.isAssignableFrom(throwable.getClass())) {
-                    return DirectResult.failure(throwable);
+            } catch (Exception exception) {
+                if (exceptionClass.isAssignableFrom(exception.getClass())) {
+                    return DirectResult.failure(exception);
                 } else {
-                    throw new RuntimeException(throwable);
+                    throw new RuntimeException(exception);
                 }
             }
         }

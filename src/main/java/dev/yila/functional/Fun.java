@@ -24,30 +24,30 @@ import java.util.function.Function;
 public class Fun<I, O> {
 
     private final Function<I, O> function;
-    private final ThrowingFunction<I, O, ? extends Throwable> throwingFunction;
-    private final Class<? extends Throwable> allowedException;
+    private final ExceptionFunction<I, O, ? extends Exception> exceptionFunction;
+    private final Class<? extends Exception> allowedException;
 
     private Fun(Function<I, O> function) {
         Objects.requireNonNull(function);
         this.function = function;
         this.allowedException = null;
-        this.throwingFunction = null;
+        this.exceptionFunction = null;
     }
 
-    private Fun(ThrowingFunction<I, O, ? extends Throwable> throwingFunction, Class<? extends Throwable> allowedException) {
-        Objects.requireNonNull(throwingFunction);
+    private Fun(ExceptionFunction<I, O, ? extends Exception> exceptionFunction, Class<? extends Exception> allowedException) {
+        Objects.requireNonNull(exceptionFunction);
         Objects.requireNonNull(allowedException);
         this.function = null;
         this.allowedException = allowedException;
-        this.throwingFunction = throwingFunction;
+        this.exceptionFunction = exceptionFunction;
     }
 
     public static <Input,Output> Fun<Input, Output> from(Function<Input, Output> function) {
         return new Fun<>(function);
     }
 
-    public static <Input,Output, Ex extends Throwable> Fun<Input, Output> from(ThrowingFunction<Input, Output, Ex> function, Class<Ex> throwableClass) {
-        return new Fun<>(function, throwableClass);
+    public static <Input,Output, Ex extends Exception> Fun<Input, Output> from(ExceptionFunction<Input, Output, Ex> function, Class<Ex> exceptionClass) {
+        return new Fun<>(function, exceptionClass);
     }
 
     public static <Input,Middle,Output> Fun<Input, Output> compose(Fun<Input, Middle> first, Fun<Middle, Output> second) {
@@ -57,12 +57,12 @@ public class Fun<I, O> {
     public Result<O> apply(I i) {
         if (allowedException != null) {
             try {
-                return DirectResult.ok(throwingFunction.apply(i));
-            } catch (Throwable throwable) {
-                if (allowedException.isAssignableFrom(throwable.getClass())) {
-                    return DirectResult.failure(throwable);
+                return DirectResult.ok(exceptionFunction.apply(i));
+            } catch (Exception exception) {
+                if (allowedException.isAssignableFrom(exception.getClass())) {
+                    return DirectResult.failure(exception);
                 } else {
-                    throw new RuntimeException(throwable);
+                    throw new RuntimeException(exception);
                 }
             }
         } else {

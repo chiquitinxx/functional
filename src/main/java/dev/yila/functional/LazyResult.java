@@ -41,8 +41,8 @@ public class LazyResult<T> implements Result<T> {
         return new LazyResult<>(() -> {
             try {
                 return DirectResult.ok(supplier.get());
-            } catch (Throwable t) {
-                return DirectResult.failure(t);
+            } catch (Exception e) {
+                return DirectResult.failure(e);
             }
         });
     }
@@ -63,10 +63,10 @@ public class LazyResult<T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Exception> Result<R> map(ExceptionFunction<T, R, K> function, Class<K> exceptionClass) {
         Objects.requireNonNull(function);
-        Objects.requireNonNull(throwableClass);
-        return new LazyResult<>(() -> execute().map(function, throwableClass));
+        Objects.requireNonNull(exceptionClass);
+        return new LazyResult<>(() -> execute().map(function, exceptionClass));
     }
 
     @Override
@@ -97,10 +97,10 @@ public class LazyResult<T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass) {
+    public <R, K extends Exception> Result<R> flatMap(ExceptionFunction<T, Result<R>, K> function, Class<K> exceptionClass) {
         Objects.requireNonNull(function);
-        Objects.requireNonNull(throwableClass);
-        return new LazyResult<>(() -> execute().flatMap(function, throwableClass));
+        Objects.requireNonNull(exceptionClass);
+        return new LazyResult<>(() -> execute().flatMap(function, exceptionClass));
     }
 
     @Override

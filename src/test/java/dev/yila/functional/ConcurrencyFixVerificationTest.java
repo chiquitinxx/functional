@@ -44,7 +44,7 @@ public class ConcurrencyFixVerificationTest {
         );
 
         assertTrue(result.hasFailure(), "Result should have failed due to timeout");
-        assertTrue(result.failure().get().toThrowable().getMessage().contains("timeOut"), "Failure should be timeout");
+        assertTrue(result.failure().get().toException().getMessage().contains("timeOut"), "Failure should be timeout");
     }
 
     @Test
@@ -63,7 +63,7 @@ public class ConcurrencyFixVerificationTest {
         assertDoesNotThrow(result::hasFailure, "hasFailure() should not throw exception");
         
         Failure failure = result.failure().get();
-        assertEquals(unexpected, failure.toThrowable(), "The failure should wrap the runtime exception");
+        assertEquals(unexpected, failure.toException(), "The failure should wrap the runtime exception");
     }
 
     @Test

@@ -47,21 +47,21 @@ public class DirectResultTest extends ResultTest {
     @Test
     void checkedExceptionLaunched() {
         String exceptionMessage = "fail :(";
-        ThrowingSupplier throwingSupplier = () -> {
+        ExceptionSupplier exceptionSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
-        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class);
-        assertEquals("ThrowableFailure: java.lang.RuntimeException: fail :(", result.failure().get().toString());
-        ThrowableFailure failure = (ThrowableFailure) result.failure().get();
-        assertEquals(exceptionMessage, failure.getThrowable().getMessage());
+        Result<Integer> result = DirectResult.createChecked(exceptionSupplier, RuntimeException.class);
+        assertEquals("ExceptionFailure: java.lang.RuntimeException: fail :(", result.failure().get().toString());
+        ExceptionFailure failure = (ExceptionFailure) result.failure().get();
+        assertEquals(exceptionMessage, failure.getException().getMessage());
     }
 
     @Test
     void checkedExceptionInMapOnFail() {
-        ThrowingSupplier throwingSupplier = () -> {
+        ExceptionSupplier exceptionSupplier = () -> {
             throw new RuntimeException("aaa");
         };
-        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class)
+        Result<Integer> result = DirectResult.createChecked(exceptionSupplier, RuntimeException.class)
                 .map(number -> {
                     throw new RuntimeException("uuu");
                 }, RuntimeException.class);
@@ -70,10 +70,10 @@ public class DirectResultTest extends ResultTest {
 
     @Test
     void checkedExceptionInFlatMapOnFail() {
-        ThrowingSupplier throwingSupplier = () -> {
+        ExceptionSupplier exceptionSupplier = () -> {
             throw new RuntimeException("aaa");
         };
-        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class)
+        Result<Integer> result = DirectResult.createChecked(exceptionSupplier, RuntimeException.class)
                 .flatMap(number -> {
                     throw new RuntimeException("uuu");
                 }, RuntimeException.class);
@@ -83,32 +83,32 @@ public class DirectResultTest extends ResultTest {
     @Test
     void getFailureAsThrowable() {
         String exceptionMessage = "fail :(";
-        ThrowingSupplier throwingSupplier = () -> {
+        ExceptionSupplier exceptionSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
-        Result<Integer> result = DirectResult.createChecked(throwingSupplier, RuntimeException.class);
-        Throwable throwable = result.failure().get().toThrowable();
+        Result<Integer> result = DirectResult.createChecked(exceptionSupplier, RuntimeException.class);
+        Throwable throwable = result.failure().get().toException();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
 
     @Test
     void unexpectedCheckedExceptions() {
         String exceptionMessage = "fail :(";
-        ThrowingSupplier throwingSupplier = () -> {
+        ExceptionSupplier exceptionSupplier = () -> {
             throw new RuntimeException(exceptionMessage);
         };
         assertThrows(RuntimeException.class, () ->
-                DirectResult.createChecked(throwingSupplier, TestException.class));
+                DirectResult.createChecked(exceptionSupplier, TestException.class));
     }
 
     @Test
     void unexpectedExceptionInCheckedFlatMap() {
-        ThrowingFunction throwingFunction = (input) -> {
+        ExceptionFunction exceptionFunction = (input) -> {
             throw new RuntimeException();
         };
         assertThrows(RuntimeException.class, () ->
                 number(3)
-                        .flatMap(throwingFunction, NullPointerException.class)
+                        .flatMap(exceptionFunction, NullPointerException.class)
                         .failure().get()
         );
     }
@@ -116,7 +116,7 @@ public class DirectResultTest extends ResultTest {
     @Test
     void canNotCreateEmptyResults() {
         assertThrows(IllegalArgumentException.class, () -> number(null));
-        assertThrows(IllegalArgumentException.class, () -> failure((Throwable) null, Throwable.class));
+        assertThrows(IllegalArgumentException.class, () -> failure((Exception) null, Exception.class));
         assertThrows(IllegalArgumentException.class, () -> failure((Failure) null));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failure((String) null));
         assertThrows(IllegalArgumentException.class, () -> DirectResult.failure(""));
@@ -147,7 +147,7 @@ public class DirectResultTest extends ResultTest {
         Result<String> result = join(empty);
 
         assertTrue(result.hasFailure());
-        assertTrue(result.failure().get().toThrowable() instanceof NoSuchElementException);
+        assertTrue(result.failure().get().toException() instanceof NoSuchElementException);
     }
 
     @Test
@@ -202,7 +202,7 @@ public class DirectResultTest extends ResultTest {
     }
 
     @Override
-    <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz) {
-        return DirectResult.failure(throwable);
+    <E extends Exception> Result<Integer> failure(E exception, Class<E> clazz) {
+        return DirectResult.failure(exception);
     }
 }

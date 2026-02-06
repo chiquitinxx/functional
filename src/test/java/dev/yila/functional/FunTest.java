@@ -38,7 +38,7 @@ public class FunTest {
 
     @Test
     public void successThrowableFunction() {
-        ThrowingFunction<String, String, RuntimeException> function = String::toUpperCase;
+        ExceptionFunction<String, String, RuntimeException> function = String::toUpperCase;
         Fun<String, String> upper = Fun.from(function, RuntimeException.class);
 
         assertEquals("WORLD", upper.apply("world").getOrThrow());
@@ -46,17 +46,17 @@ public class FunTest {
 
     @Test
     public void exceptionThrowableFunction() {
-        ThrowingFunction<String, String, NullPointerException> function = s -> {
+        ExceptionFunction<String, String, NullPointerException> function = s -> {
             throw new NullPointerException("yup");
         };
         Fun<String, String> upper = Fun.from(function, NullPointerException.class);
 
-        assertEquals("yup", upper.apply("tt").failure().get().toThrowable().getMessage());
+        assertEquals("yup", upper.apply("tt").failure().get().toException().getMessage());
     }
 
     @Test
     public void runtimeExceptionThrowableFunction() {
-        ThrowingFunction<String, String, NullPointerException> function = s -> {
+        ExceptionFunction<String, String, NullPointerException> function = s -> {
             throw new RuntimeException("yup");
         };
         Fun<String, String> upper = Fun.from(function, NullPointerException.class);

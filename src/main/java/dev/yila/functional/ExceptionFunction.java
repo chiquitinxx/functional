@@ -14,18 +14,20 @@
 package dev.yila.functional;
 
 /**
- * A functional interface similar to Supplier but allows throwing checked exceptions.
+ * A functional interface similar to Function but allows throwing checked exceptions.
  * 
- * @param <T> the type of results supplied by this supplier
+ * @param <T> the type of the input to the function
+ * @param <R> the type of the result of the function
  * @param <E> the type of the exception that may be thrown
  */
 @FunctionalInterface
-public interface ThrowingSupplier<T, E extends Throwable> {
+public interface ExceptionFunction<T, R, E extends Exception> {
     /**
-     * Gets a result.
+     * Applies this function to the given argument.
      * 
-     * @return a result
-     * @throws E if the supplier throws an exception
+     * @param input the function argument
+     * @return the function result
+     * @throws E if the function throws an exception
      */
-    T get() throws E;
+    R apply(T input) throws E;
 }

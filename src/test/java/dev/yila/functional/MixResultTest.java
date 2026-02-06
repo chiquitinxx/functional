@@ -40,11 +40,11 @@ public class MixResultTest {
     @Test
     public void multipleFailures() {
         Failure multiple = new MultipleFailures(
-                Failure.create(new Throwable("hello")),
+                Failure.create(new Exception("hello")),
                 Failure.create("message"),
                 Failure.create("code", "description")
         );
 
-        assertEquals("[ThrowableFailure: java.lang.Throwable: hello, message, code: description]", multiple.toString());
+        assertEquals("[ExceptionFailure: java.lang.Exception: hello, message, code: description]", multiple.toString());
     }
 }

@@ -66,12 +66,12 @@ public interface Result<T> {
     /**
      * New result with the execution of the function that can throw a check exception.
      * @param function
-     * @param throwableClass
+     * @param exceptionClass
      * @return
      * @param <R>
      * @param <K>
      */
-    <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass);
+    <R, K extends Exception> Result<R> map(ExceptionFunction<T, R, K> function, Class<K> exceptionClass);
 
     /**
      * Map current result with a Fun that returns a new result.
@@ -92,12 +92,12 @@ public interface Result<T> {
     /**
      * Flatten map current result with a throwing function that returns a new result.
      * @param function
-     * @param throwableClass
+     * @param exceptionClass
      * @return
      * @param <R>
      * @param <K>
      */
-    <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass);
+    <R, K extends Exception> Result<R> flatMap(ExceptionFunction<T, Result<R>, K> function, Class<K> exceptionClass);
 
     /**
      * Execute the consumer if the result is success

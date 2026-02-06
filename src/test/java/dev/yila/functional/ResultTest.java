@@ -75,7 +75,7 @@ public abstract class ResultTest {
 
     @Test
     void flatMapWithCheckedException() {
-        ThrowingFunction<Integer, Result<Integer>, RuntimeException> function =
+        ExceptionFunction<Integer, Result<Integer>, RuntimeException> function =
                 (input) -> number(input + 2);
         Result<Integer> result = number(6)
                 .flatMap(function, RuntimeException.class);
@@ -84,7 +84,7 @@ public abstract class ResultTest {
 
     @Test
     void mapWithCheckedException() {
-        ThrowingFunction<Integer, Integer, RuntimeException> function =
+        ExceptionFunction<Integer, Integer, RuntimeException> function =
                 (input) -> input + 2;
         Result<Integer> result = number(6)
                 .map(function, RuntimeException.class);
@@ -93,22 +93,22 @@ public abstract class ResultTest {
 
     @Test
     void checkedExceptionInFlatMap() {
-        ThrowingFunction throwingFunction = (input) -> {
+        ExceptionFunction exceptionFunction = (input) -> {
             throw new RuntimeException("Fail");
         };
         Result<Integer> result = number(3)
-                .flatMap(throwingFunction, RuntimeException.class);
+                .flatMap(exceptionFunction, RuntimeException.class);
         assertTrue(result.failure().get().toString().endsWith("java.lang.RuntimeException: Fail"));
     }
 
     @Test
     void checkedExceptionInMap() {
-        ThrowingFunction throwingFunction = (input) -> {
+        ExceptionFunction exceptionFunction = (input) -> {
             throw new RuntimeException("Fail");
         };
         Result<Integer> result = number(3)
-                .map(throwingFunction, RuntimeException.class);
-        assertTrue(result.failure().get().toString().endsWith("ThrowableFailure: java.lang.RuntimeException: Fail"));
+                .map(exceptionFunction, RuntimeException.class);
+        assertTrue(result.failure().get().toString().endsWith("ExceptionFailure: java.lang.RuntimeException: Fail"));
     }
 
     @Test
@@ -131,7 +131,7 @@ public abstract class ResultTest {
     void throwableFailure() {
         String exceptionMessage = "fail :(";
         Result<?> result = failure(new RuntimeException(exceptionMessage), RuntimeException.class);
-        Throwable throwable = result.failure().get().toThrowable();
+        Throwable throwable = result.failure().get().toException();
         assertEquals(exceptionMessage, throwable.getMessage());
     }
 
@@ -171,7 +171,7 @@ public abstract class ResultTest {
 
     @Test
     void mapFunFailure() {
-        ThrowingFunction<String, String, NullPointerException> function = s -> {
+        ExceptionFunction<String, String, NullPointerException> function = s -> {
             throw new NullPointerException("null");
         };
         Fun<String, String> upper = Fun.from(function, NullPointerException.class);
@@ -187,5 +187,5 @@ public abstract class ResultTest {
     abstract Result<String> string(String string);
     abstract Result<Optional<String>> optional(Optional<String> optional);
     abstract Result<Integer> failure(Failure failure);
-    abstract <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz);
+    abstract <E extends Exception> Result<Integer> failure(E exception, Class<E> clazz);
 }

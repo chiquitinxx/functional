@@ -32,11 +32,11 @@ class LazyResultCachingTest {
         });
 
         assertTrue(lazy.hasFailure(), "Should have failure on first access");
-        assertEquals("Mapping Failed", lazy.failure().get().toThrowable().getMessage());
+        assertEquals("Mapping Failed", lazy.failure().get().toException().getMessage());
         assertEquals(1, counter.get(), "Supplier should have run once");
 
         assertTrue(lazy.hasFailure(), "Should have failure on second access");
-        assertEquals("Mapping Failed", lazy.failure().get().toThrowable().getMessage());
+        assertEquals("Mapping Failed", lazy.failure().get().toException().getMessage());
         assertEquals(1, counter.get(), "Supplier should NOT have run again (result should be cached)");
     }
 }

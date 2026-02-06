@@ -20,13 +20,13 @@ package dev.yila.functional.failure;
 public interface Failure {
 
     /**
-     * Creates a failure from a throwable.
+     * Creates a failure from an exception.
      * 
-     * @param t the throwable to wrap
+     * @param t the exception to wrap
      * @return a new failure
      */
-    static Failure create(Throwable t) {
-        return new ThrowableFailure(t);
+    static Failure create(Exception t) {
+        return new ExceptionFailure(t);
     }
 
     /**
@@ -51,15 +51,15 @@ public interface Failure {
     }
 
     /**
-     * Converts this failure to a Throwable.
+     * Converts this failure to an Exception.
      * 
-     * @return a Throwable representation of this failure
+     * @return an exception representation of this failure
      */
-    default Throwable toThrowable() {
-        if (this instanceof ThrowableFailure) {
-            return ((ThrowableFailure)this).getThrowable();
+    default Exception toException() {
+        if (this instanceof ExceptionFailure) {
+            return ((ExceptionFailure)this).getException();
         } else {
-            return new Throwable(this.toString());
+            return new Exception(this.toString());
         }
     }
 }

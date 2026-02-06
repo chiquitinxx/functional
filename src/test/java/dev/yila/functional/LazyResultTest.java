@@ -17,12 +17,9 @@ import dev.yila.functional.failure.Failure;
 import dev.yila.functional.failure.CodeDescriptionFailure;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,7 +41,7 @@ public class LazyResultTest extends ResultTest {
         });
         assertTrue(result.hasFailure());
         Failure failure = result.failure().get();
-        assertEquals(runtimeException, failure.toThrowable());
+        assertEquals(runtimeException, failure.toException());
     }
 
     @Test
@@ -116,7 +113,7 @@ public class LazyResultTest extends ResultTest {
             throw runtimeException;
         }));
         assertNotSame(hello, exceptionHello);
-        assertSame(runtimeException, exceptionHello.failure().get().toThrowable());
+        assertSame(runtimeException, exceptionHello.failure().get().toException());
     }
 
     @Test
@@ -125,7 +122,7 @@ public class LazyResultTest extends ResultTest {
         Result<String> exceptionHello = hello.flatMap(s -> {
             throw new NullPointerException();
         }, NullPointerException.class);
-        assertTrue(exceptionHello.failure().get().toThrowable() instanceof NullPointerException);
+        assertTrue(exceptionHello.failure().get().toException() instanceof NullPointerException);
     }
 
     @Test
@@ -156,7 +153,7 @@ public class LazyResultTest extends ResultTest {
     @Test
     void generateStackOverflowError() {
         Result<Integer> hello = LazyResult.create(() -> add(3));
-        assertTrue(hello.failure().get().toThrowable() instanceof StackOverflowError);
+        assertThrows(StackOverflowError.class, hello::getOrThrow);
     }
 
     @Test
@@ -228,7 +225,7 @@ public class LazyResultTest extends ResultTest {
     }
 
     @Override
-    <E extends Throwable> Result<Integer> failure(E throwable, Class<E> clazz) {
-        return DirectResult.failure(throwable);
+    <E extends Exception> Result<Integer> failure(E exception, Class<E> clazz) {
+        return DirectResult.failure(exception);
     }
 }

@@ -41,11 +41,11 @@ public class AsyncResult <T> implements Result<T> {
      * @param executor the executor to use for async operations
      * @param future the completable future
      */
-    private AsyncResult(Executor executor, CompletableFuture<T> future, Class<? extends Throwable> throwableClass) {
+    private AsyncResult(Executor executor, CompletableFuture<T> future, Class<? extends Exception> exceptionClass) {
         this.executor = executor;
         this.completableFuture = future.handleAsync((result, throwable) -> {
             if (throwable != null) {
-                return DirectResult.failure(throwable.getCause() != null ? throwable.getCause() : throwable);
+                return throwableError(throwable);
             }
             return successResult(result);
         }, executor);
@@ -63,7 +63,7 @@ public class AsyncResult <T> implements Result<T> {
         this.completableFuture = CompletableFuture.supplyAsync(supplier, executor)
                 .handleAsync((result, throwable) -> {
             if (throwable != null) {
-                return DirectResult.failure(throwable.getCause());
+                return throwableError(throwable);
             }
             return successResult(result);
         }, executor);
@@ -73,7 +73,7 @@ public class AsyncResult <T> implements Result<T> {
         this.executor = executor;
         this.completableFuture = future.handleAsync((value, throwable) -> {
             if (throwable != null) {
-                return DirectResult.failure(throwable);
+                return throwableError(throwable);
             }
             return value;
         }, executor);
@@ -100,7 +100,7 @@ public class AsyncResult <T> implements Result<T> {
      * @return a new AsyncResult
      */
     public static <T> AsyncResult<T> of(Executor executor, CompletableFuture<T> future) {
-        return new AsyncResult<>(executor, future, Throwable.class);
+        return new AsyncResult<>(executor, future, Exception.class);
     }
 
     /**
@@ -108,20 +108,20 @@ public class AsyncResult <T> implements Result<T> {
      * This method can handle checked exceptions thrown by the supplier.
      * 
      * @param executor the executor to use for async operations
-     * @param throwingSupplier the supplier that may throw a checked exception
-     * @param throwableClass the class of the checked exception that may be thrown
+     * @param exceptionSupplier the supplier that may throw a checked exception
+     * @param exceptionClass the class of the checked exception that may be thrown
      * @param <T> the type of the result value
      * @param <K> the type of the checked exception
      * @return a new AsyncResult
      */
-    public static <T, K extends Throwable> AsyncResult<T> createChecked(Executor executor, ThrowingSupplier<T, K> throwingSupplier, Class<K> throwableClass) {
+    public static <T, K extends Exception> AsyncResult<T> createChecked(Executor executor, ExceptionSupplier<T, K> exceptionSupplier, Class<K> exceptionClass) {
         return new AsyncResult<>(executor, CompletableFuture.supplyAsync(() -> {
             try {
-                return throwingSupplier.get();
-            } catch (Throwable t) {
+                return exceptionSupplier.get();
+            } catch (Exception t) {
                 throw new CompletionException(t);
             }
-        }, executor), throwableClass);
+        }, executor), exceptionClass);
     }
 
     /**
@@ -210,9 +210,9 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> map(ThrowingFunction<T, R, K> function, Class<K> throwableClass) {
+    public <R, K extends Exception> Result<R> map(ExceptionFunction<T, R, K> function, Class<K> exceptionClass) {
         CompletableFuture<Result<R>> cf = this.completableFuture
-                .thenApply(r -> r.map(function, throwableClass));
+                .thenApply(r -> r.map(function, exceptionClass));
         return new AsyncResult<>(this.executor, cf);
     }
 
@@ -237,9 +237,9 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     @Override
-    public <R, K extends Throwable> Result<R> flatMap(ThrowingFunction<T, Result<R>, K> function, Class<K> throwableClass) {
+    public <R, K extends Exception> Result<R> flatMap(ExceptionFunction<T, Result<R>, K> function, Class<K> exceptionClass) {
         CompletableFuture<Result<R>> cf = this.completableFuture.thenCompose(r -> {
-            Result<R> mapped = r.flatMap(function, throwableClass);
+            Result<R> mapped = r.flatMap(function, exceptionClass);
             if (mapped instanceof AsyncResult) {
                 return ((AsyncResult<R>) mapped).completableFuture;
             } else {
@@ -270,6 +270,13 @@ public class AsyncResult <T> implements Result<T> {
 
     private Result<T> getResult() {
         return this.completableFuture.join();
+    }
+
+    private Result<T> throwableError(Throwable throwable) {
+        if (throwable instanceof Error || (throwable.getCause() != null && throwable.getCause() instanceof Error)) {
+            throw throwable instanceof Error ? (Error) throwable : (Error) throwable.getCause();
+        }
+        return DirectResult.failure(throwable.getCause() != null ? (Exception) throwable.getCause() : (Exception) throwable);
     }
 
     private Result<T> successResult(T result) {

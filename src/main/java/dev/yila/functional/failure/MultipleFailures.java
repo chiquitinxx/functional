@@ -58,10 +58,10 @@ public class MultipleFailures implements Failure {
     }
 
     @Override
-    public Throwable toThrowable() {
+    public Exception toException() {
         return this.failures.stream().skip(1)
-                .map(Failure::toThrowable)
-                .reduce(this.failures.get(0).toThrowable(), (all, current) -> {
+                .map(Failure::toException)
+                .reduce(this.failures.get(0).toException(), (all, current) -> {
                     all.addSuppressed(current);
                     return all;
                 });
