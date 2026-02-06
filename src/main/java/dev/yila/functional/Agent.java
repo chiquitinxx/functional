@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * Agent that store a value, and modification of the value are thread safe.
@@ -66,14 +67,14 @@ public class Agent<T> {
      * @param function
      * @param <T>
      */
-    public static <T> void update(Agent<T> agent, Function<T, T> function) {
+    public static <T> void update(Agent<T> agent, UnaryOperator<T> function) {
         agent.addFunction(function);
     }
 
     private final Executor executor;
     private final int maxCapacity;
     private volatile T value;
-    private final ConcurrentLinkedQueue<Function<T, T>> mailbox = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<UnaryOperator<T>> mailbox = new ConcurrentLinkedQueue<>();
     private final AtomicInteger wip = new AtomicInteger(0);
     private final AtomicInteger size = new AtomicInteger(0);
 
@@ -92,7 +93,7 @@ public class Agent<T> {
         return AsyncResult.of(executor, future);
     }
 
-    private void addFunction(Function<T, T> updateFunction) {
+    private void addFunction(UnaryOperator<T> updateFunction) {
         if (size.incrementAndGet() > maxCapacity) {
             size.decrementAndGet();
             throw new IllegalStateException("Agent mailbox is full");
@@ -110,7 +111,7 @@ public class Agent<T> {
     private void runLoop() {
         int missed = 1;
         do {
-            Function<T, T> update;
+            UnaryOperator<T> update;
             while ((update = mailbox.poll()) != null) {
                 try {
                     this.value = update.apply(this.value);
