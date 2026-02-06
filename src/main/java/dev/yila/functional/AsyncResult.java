@@ -273,7 +273,7 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     private Result<T> throwableError(Throwable throwable) {
-        if (throwable instanceof Error || (throwable.getCause() != null && throwable.getCause() instanceof Error)) {
+        if (throwable instanceof Error || throwable.getCause() instanceof Error) {
             throw throwable instanceof Error ? (Error) throwable : (Error) throwable.getCause();
         }
         return DirectResult.failure(throwable.getCause() != null ? (Exception) throwable.getCause() : (Exception) throwable);
