@@ -17,6 +17,8 @@ import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,6 +73,38 @@ public class AsyncResultTest extends ResultTest {
 
         assertThrows(RuntimeException.class, result::getOrThrow, "hey");
         assertEquals(1, atomicInteger.get());
+    }
+
+    @Test
+    void withTimeoutSuccess() {
+        AsyncResult<Integer> result = AsyncResult.create(ThreadPool.get(), () -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return 5;
+        });
+
+        Result<Integer> timedResult = result.withTimeout(500, TimeUnit.MILLISECONDS);
+        assertEquals(5, timedResult.getOrThrow());
+    }
+
+    @Test
+    void withTimeoutFailure() {
+        AsyncResult<Integer> result = AsyncResult.create(ThreadPool.get(), () -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return 5;
+        });
+
+        Result<Integer> timedResult = result.withTimeout(100, TimeUnit.MILLISECONDS);
+        assertTrue(timedResult.hasFailure());
+        Failure failure = timedResult.failure().get();
+        assertInstanceOf(TimeoutException.class, failure.toException());
     }
 
     static class TestException extends Exception {}

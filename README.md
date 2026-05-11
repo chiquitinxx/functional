@@ -72,15 +72,6 @@ try {
         .map(value -> "The value is: " + value);
     System.out.println(finalAsyncResult.getOrThrow()); // "The value is: 200"
 
-    Result<String> parallelResult = Result.inParallel(
-        executor,
-        (s1, s2) -> DirectResult.ok(s1 + " " + s2), // Join function
-        () -> "Hello",                             // First task
-        () -> "World"                              // Second task
-    );
-
-    System.out.println(parallelResult.getOrThrow()); // "Hello World"
-
 } finally {
     executor.shutdown();
 }
@@ -203,7 +194,7 @@ Agent<Integer> boundedCounter = Agent.create(executor, 0, 100);
 
 ## Dependencies
 
-Java 8, no more dependencies.
+Java 21, no more dependencies.
 
 ## Run pitest mutation coverage
 

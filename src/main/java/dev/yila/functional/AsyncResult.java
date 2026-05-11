@@ -123,6 +123,15 @@ public class AsyncResult <T> implements Result<T> {
         }, executor), exceptionClass);
     }
 
+    public Result<T> withTimeout(long timeout, TimeUnit unit) {
+        CompletableFuture<Result<T>> timedCf = this.completableFuture.orTimeout(timeout, unit)
+                .exceptionally(throwable -> {
+                    Throwable cause = throwable instanceof CompletionException ? throwable.getCause() : throwable;
+                    return throwableError(cause);
+                });
+        return new AsyncResult<>(this.executor, timedCf);
+    }
+
     @Override
     public boolean hasFailure() {
         return getResult().hasFailure();
