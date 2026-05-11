@@ -17,7 +17,6 @@ import dev.yila.functional.failure.Failure;
 
 import java.util.Optional;
 import java.util.concurrent.*;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -122,69 +121,6 @@ public class AsyncResult <T> implements Result<T> {
                 throw new CompletionException(t);
             }
         }, executor), exceptionClass);
-    }
-
-    /**
-     * Executes two suppliers in parallel and joins their results using the specified function.
-     * Uses a default timeout of 30 seconds.
-     * 
-     * @param executor the executor to use for async operations
-     * @param joinFunction the function to combine the results
-     * @param first the first supplier to execute
-     * @param second the second supplier to execute
-     * @param <T> the type of the final result
-     * @param <F> the type of the first supplier's result
-     * @param <S> the type of the second supplier's result
-     * @return a Result containing the joined result
-     */
-    public static <T, F, S> Result<T> inParallel(Executor executor, BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second) {
-        return inParallel(executor, joinFunction, first, second, 30, TimeUnit.SECONDS);
-    }
-
-    /**
-     * Executes two suppliers in parallel and joins their results using the specified function.
-     * This version allows specifying a custom timeout.
-     * 
-     * @param executor the executor to use for async operations
-     * @param joinFunction the function to combine the results
-     * @param first the first supplier to execute
-     * @param second the second supplier to execute
-     * @param timeOut the maximum time to wait for both suppliers to complete
-     * @param timeUnit the time unit for the timeout parameter
-     * @param <T> the type of the final result
-     * @param <F> the type of the first supplier's result
-     * @param <S> the type of the second supplier's result
-     * @return a Result containing the joined result or a timeout failure
-     */
-    public static <T, F, S> Result<T> inParallel(Executor executor, BiFunction<F, S, Result<T>> joinFunction, Supplier<F> first, Supplier<S> second, long timeOut, TimeUnit timeUnit) {
-        ScheduledExecutorService scheduler = TimeoutScheduler.getInstance();
-        CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
-
-        CompletableFuture<F> cfFirst = CompletableFuture.supplyAsync(first, executor);
-        CompletableFuture<S> cfSecond = CompletableFuture.supplyAsync(second, executor);
-
-        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
-            timeoutFuture.completeExceptionally(new TimeoutException("AsyncResult inParallel timeOut"));
-            //TODO execution is not stopped
-            cfFirst.cancel(true);
-            cfSecond.cancel(true);
-        }, timeOut, timeUnit);
-
-        CompletableFuture<Result<T>> result = cfFirst.thenCombine(cfSecond, joinFunction);
-
-        timeoutFuture.whenComplete((r, ex) -> {
-            if (ex != null) {
-                result.completeExceptionally(ex);
-            }
-        });
-
-        result.whenComplete((r, ex) -> {
-           if (!timeoutTask.isDone()) {
-               timeoutTask.cancel(true);
-           }
-        });
-
-        return new AsyncResult<>(executor, result);
     }
 
     @Override

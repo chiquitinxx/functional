@@ -16,12 +16,8 @@ package dev.yila.functional;
 import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,90 +39,6 @@ public class AsyncResultTest extends ResultTest {
         assertTrue(result.hasFailure());
         Failure failure = result.failure().get();
         assertEquals(runtimeException, failure.toException());
-    }
-
-    @Test
-    void executeTwoTaskInParallel() {
-        Supplier<String> first = () -> "hello";
-        Supplier<String> second = () -> "world";
-
-        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
-
-        assertEquals("hello world!", result.getOrThrow());
-    }
-
-    @Test
-    void executeTwoTaskInParallelWithTimeOut() {
-        Supplier<String> first = () -> "hello";
-        Supplier<String> second = () -> "world";
-
-        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second, 1, TimeUnit.SECONDS);
-
-        assertEquals("hello world!", result.getOrThrow());
-    }
-
-    @Test
-    void exceptionIsControlledExecutingInParallel() {
-        Supplier<String> first = () -> "hello";
-        Supplier<String> second = () -> {
-            throw new RuntimeException("world is down");
-        };
-
-        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
-
-        assertEquals("world is down", result.failure().get().toException().getMessage());
-    }
-
-    @Test
-    void exceptionIsControlledExecutingInParallelAtFirst() {
-        Supplier<String> second = () -> "hello";
-        Supplier<String> first = () -> {
-            throw new RuntimeException("world is down");
-        };
-
-        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second);
-
-        assertEquals("world is down", result.failure().get().toException().getMessage());
-    }
-
-    @Test
-    void exceptionInParallelWithTimeOut() {
-        Supplier<String> first = () -> "hello";
-        Supplier<String> second = () -> {
-            while (true) {}
-        };
-
-        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + " " + s + "!"), first, second,
-                200, TimeUnit.MILLISECONDS);
-
-        assertEquals("AsyncResult inParallel timeOut", result.failure().get().toException().getMessage());
-    }
-
-    @Test
-    void validateExecutionInParallel() {
-        Supplier<String> supplier = () -> {
-            try { Thread.sleep(80); } catch (InterruptedException ignored) {}
-            return "world";
-        };
-        LocalDateTime before = LocalDateTime.now();
-        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + s), supplier, supplier);
-
-        assertEquals("worldworld", result.getOrThrow());
-        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
-    }
-
-    @Test
-    void validateExecutionInParallelJoiningInParallelExecutions() {
-        Supplier<String> supplier = () -> {
-            try { Thread.sleep(80); } catch (InterruptedException ignored) {}
-            return "world";
-        };
-        LocalDateTime before = LocalDateTime.now();
-        Result<String> run = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + s), supplier, supplier);
-        Result<String> result = AsyncResult.inParallel(ThreadPool.get(), (f, s) -> DirectResult.ok(f + s), supplier, run::getOrThrow);
-
-        assertEquals("worldworldworld", result.getOrThrow());
-        assertTrue(ChronoUnit.MILLIS.between(before, LocalDateTime.now()) < 130);
     }
 
     @Test

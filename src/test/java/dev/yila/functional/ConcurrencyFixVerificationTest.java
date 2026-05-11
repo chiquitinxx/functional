@@ -18,34 +18,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConcurrencyFixVerificationTest {
-
-    @Test
-    void testInParallelCancellationOnTimeout() throws InterruptedException {
-        Supplier<String> longRunningTask = () -> {
-            try {
-                Thread.sleep(5000); // Sleep longer than timeout
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return "finished";
-        };
-
-        Result<String> result = AsyncResult.inParallel(
-                ThreadPool.get(),
-                (a, b) -> DirectResult.ok(a + b),
-                longRunningTask,
-                () -> "quick",
-                100, TimeUnit.MILLISECONDS // Short timeout
-        );
-
-        assertTrue(result.hasFailure(), "Result should have failed due to timeout");
-        assertTrue(result.failure().get().toException().getMessage().contains("timeOut"), "Failure should be timeout");
-    }
 
     @Test
     void testCreateCheckedHandlesUnexpectedExceptionSafely() {
