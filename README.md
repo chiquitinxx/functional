@@ -7,9 +7,9 @@ A Java 8 library designed to enhance your functional programming experience by p
 
 ## Core Classes
 
-### `Pair<L, R>` and `Trio<F, S, T>`
+### `Pair<L, R>` 
 
-Simple, immutable generic containers for holding two (`Pair`) or three (`Trio`) values of any type.
+Simple, immutable generic containers for holding two (`Pair`) values of any type.
 
 **Usage:**
 
@@ -18,12 +18,6 @@ Simple, immutable generic containers for holding two (`Pair`) or three (`Trio`) 
 Pair<String, Integer> pair = Pair.of("Age", 30);
 String key = pair.getLeft();   // "Age"
 Integer value = pair.getRight(); // 30
-
-// Create a Trio
-Trio<String, String, Integer> person = Trio.of("John", "Doe", 30);
-String firstName = person.getFirst();  // "John"
-String lastName = person.getSecond(); // "Doe"
-Integer age = person.getThird();   // 30
 ```
 
 ### `Result<T>`

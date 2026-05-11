@@ -56,8 +56,8 @@ public interface Failure {
      * @return an exception representation of this failure
      */
     default Exception toException() {
-        if (this instanceof ExceptionFailure) {
-            return ((ExceptionFailure)this).getException();
+        if (this instanceof ExceptionFailure failure) {
+            return failure.getException();
         } else {
             return new Exception(this.toString());
         }

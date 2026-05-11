@@ -61,7 +61,7 @@ public class MultipleFailures implements Failure {
     public Exception toException() {
         return this.failures.stream().skip(1)
                 .map(Failure::toException)
-                .reduce(this.failures.get(0).toException(), (all, current) -> {
+                .reduce(this.failures.getFirst().toException(), (all, current) -> {
                     all.addSuppressed(current);
                     return all;
                 });

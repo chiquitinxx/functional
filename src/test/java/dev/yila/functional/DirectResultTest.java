@@ -160,7 +160,7 @@ public class DirectResultTest extends ResultTest {
 
     @Test
     void sequenceResults() {
-        Result<Integer> sequenceFailure = DirectResult.sequence(list -> list.get(0),
+        Result<Integer> sequenceFailure = DirectResult.sequence(list -> list.getFirst(),
                 number(5),
                 failure(CodeDescriptionFailure.create(CODE, DESCRIPTION)));
         assertTrue(sequenceFailure.hasFailure());

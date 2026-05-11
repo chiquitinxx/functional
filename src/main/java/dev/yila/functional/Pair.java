@@ -52,9 +52,9 @@ public class Pair<L, R> {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof Pair &&
-                Objects.equals(this.left, ((Pair<?, ?>) obj).left) &&
-                Objects.equals(this.right, ((Pair<?, ?>) obj).right);
+        return obj instanceof Pair<?, ?> p &&
+                Objects.equals(this.left, p.left) &&
+                Objects.equals(this.right, p.right);
     }
 
     @Override

@@ -33,7 +33,7 @@ public class MultipleFailuresTest {
         MultipleFailures failures = new MultipleFailures(list);
         assertSame(throwable, failures.getFailures().get(1).toException());
         assertEquals("code: description", failures.getFailures()
-                .get(0).toException().getMessage());
+                .getFirst().toException().getMessage());
     }
 
     @Test
