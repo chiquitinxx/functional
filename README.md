@@ -3,7 +3,7 @@
 
 # functional
 
-A Java 8 library designed to enhance your functional programming experience by providing a collection of robust and thread-safe classes for handling common functional patterns.
+A Java 21 library designed to enhance your functional programming experience by providing a collection of robust and thread-safe classes for handling common functional patterns.
 
 ## Core Classes
 
