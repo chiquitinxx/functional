@@ -144,8 +144,8 @@ public class Matcher<I, O> {
 
     private Optional<Function<I, O>> getMatchingFunction(I input) {
         return matchers.stream()
-                    .filter(pair -> pair.getLeft().apply(input))
+                    .filter(pair -> pair.left().apply(input))
                     .findFirst()
-                    .map(Pair::getRight);
+                    .map(Pair::right);
     }
 }

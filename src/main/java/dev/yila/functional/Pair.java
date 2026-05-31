@@ -13,57 +13,47 @@
  */
 package dev.yila.functional;
 
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 /**
- * Class to store 2 sorted values, also known as couple.
+ * A record to store 2 sorted values, also known as couple.
  * @param <L> left
  * @param <R> right
  */
-public class Pair<L, R> {
+public record Pair<L, R>(L left, R right) {
 
-    private final L left;
-    private final R right;
-
+    /**
+     * Creates a new Pair with the given left and right values.
+     * @param left the left value
+     * @param right the right value
+     * @param <Left> the type of the left value
+     * @param <Right> the type of the right value
+     * @return a new Pair
+     * @throws IllegalArgumentException if either value is null
+     */
     public static <Left, Right> Pair<Left, Right> of(Left left, Right right) {
         return new Pair<>(left, right);
     }
 
-    public Pair(L left, R right) {
+    /**
+     * Constructs a new Pair with null checks.
+     * @param left the left value
+     * @param right the right value
+     * @throws IllegalArgumentException if either value is null
+     */
+    public Pair {
         if (left == null || right == null) {
             throw new IllegalArgumentException("Null is not allowed as any value for Pair.");
         }
-        this.left = left;
-        this.right = right;
     }
 
-    public L getLeft() {
-        return left;
-    }
-
-    public R getRight() {
-        return right;
-    }
-
+    /**
+     * Applies a bi-function to the left and right values.
+     * @param biFunction the function to apply
+     * @param <T> the result type
+     * @return the result of applying the function
+     */
     public <T> T apply(BiFunction<L, R, T> biFunction) {
         return biFunction.apply(this.left, this.right);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Pair<?, ?> p &&
-                Objects.equals(this.left, p.left) &&
-                Objects.equals(this.right, p.right);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.left.hashCode() + this.right.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Pair(" + this.left + ", " + this.right + ")";
     }
 }

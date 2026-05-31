@@ -47,10 +47,10 @@ public class Validation {
         if (validations == null || validations.length == 0) {
             throw new IllegalArgumentException("At least one validation is needed.");
         }
-        List<Result> results = Arrays.stream(validations)
-                .map(pair -> validate(value, pair.getLeft(), pair.getRight()))
+        List<Result<T>> results = Arrays.stream(validations)
+                .map(pair -> validate(value, pair.left(), pair.right()))
                 .collect(Collectors.toList());
-        return DirectResult.sequence(list -> list.getFirst(), results.toArray(new Result[results.size()]));
+        return DirectResult.sequence(list -> list.getFirst(), results.toArray(new Result[0]));
     }
 
     /**
