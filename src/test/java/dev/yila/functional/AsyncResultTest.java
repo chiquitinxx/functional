@@ -17,9 +17,11 @@ import dev.yila.functional.failure.Failure;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -73,6 +75,17 @@ public class AsyncResultTest extends ResultTest {
 
         assertThrows(RuntimeException.class, result::getOrThrow, "hey");
         assertEquals(1, atomicInteger.get());
+    }
+
+    @Test
+    void checkedAsyncThrowingError() {
+        Supplier<String> supplier = () -> {
+            throw new Error("hey");
+        };
+
+        AsyncResult<String> result = AsyncResult.create(ThreadPool.get(), supplier);
+
+        assertThrows(CompletionException.class, result::getOrThrow, "hey");
     }
 
     @Test

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * This class is immutable and returns a new instance after any modifying operation.
  * @param <T> Type of the value
  */
-public class DirectResult<T> implements Result<T> {
+public final class DirectResult<T> implements Result<T> {
 
     /**
      * Create a new success result.

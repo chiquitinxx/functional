@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  * The result is lazy, and only begins computing after result() or start() is called.
  * @param <T> success result type
  */
-public class LazyResult<T> implements Result<T> {
+public final class LazyResult<T> implements Result<T> {
 
     /**
      * Create a lazy result from a supplier.

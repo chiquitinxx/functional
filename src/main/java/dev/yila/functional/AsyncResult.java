@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * 
  * @param <T> the type of the result value
  */
-public class AsyncResult <T> implements Result<T> {
+public final class AsyncResult <T> implements Result<T> {
 
     private final CompletableFuture<Result<T>> completableFuture;
     private final Executor executor;
@@ -125,10 +125,7 @@ public class AsyncResult <T> implements Result<T> {
 
     public Result<T> withTimeout(long timeout, TimeUnit unit) {
         CompletableFuture<Result<T>> timedCf = this.completableFuture.orTimeout(timeout, unit)
-                .exceptionally(throwable -> {
-                    Throwable cause = throwable instanceof CompletionException ? throwable.getCause() : throwable;
-                    return throwableError(cause);
-                });
+                .exceptionally(this::throwableError);
         return new AsyncResult<>(this.executor, timedCf);
     }
 
@@ -165,11 +162,10 @@ public class AsyncResult <T> implements Result<T> {
     public <R> Result<R> flatMap(Function<T, Result<R>> function) {
         CompletableFuture<Result<R>> cf = this.completableFuture.thenCompose(r -> {
             Result<R> mapped = r.flatMap(function);
-            if (mapped instanceof AsyncResult) {
-                return ((AsyncResult<R>) mapped).completableFuture;
-            } else {
-                return CompletableFuture.completedFuture(mapped);
+            if (mapped instanceof AsyncResult<R> asyncResult) {
+                return asyncResult.completableFuture;
             }
+            return CompletableFuture.completedFuture(mapped);
         });
         return new AsyncResult<>(this.executor, cf);
     }
@@ -185,11 +181,10 @@ public class AsyncResult <T> implements Result<T> {
     public <R, K extends Exception> Result<R> flatMap(ExceptionFunction<T, Result<R>, K> function, Class<K> exceptionClass) {
         CompletableFuture<Result<R>> cf = this.completableFuture.thenCompose(r -> {
             Result<R> mapped = r.flatMap(function, exceptionClass);
-            if (mapped instanceof AsyncResult) {
-                return ((AsyncResult<R>) mapped).completableFuture;
-            } else {
-                return CompletableFuture.completedFuture(mapped);
+            if (mapped instanceof AsyncResult<R> asyncResult) {
+                return asyncResult.completableFuture;
             }
+            return CompletableFuture.completedFuture(mapped);
         });
         return new AsyncResult<>(this.executor, cf);
     }
@@ -218,10 +213,12 @@ public class AsyncResult <T> implements Result<T> {
     }
 
     private Result<T> throwableError(Throwable throwable) {
-        if (throwable instanceof Error || throwable.getCause() instanceof Error) {
-            throw throwable instanceof Error e ? e : (Error) throwable.getCause();
+        if (throwable.getCause() instanceof Error cause) {
+            throw cause;
         }
-        return DirectResult.failure(throwable.getCause() != null ? (Exception) throwable.getCause() : (Exception) throwable);
+        return DirectResult.failure(throwable.getCause() instanceof Exception ex
+                ? ex
+                : (Exception) throwable);
     }
 
     private Result<T> successResult(T result) {

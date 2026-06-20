@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * This class is immutable and returns a new instance after any modifying operation.
  * @param <T> Type of result value
  */
-public interface Result<T> {
+public sealed interface Result<T> permits DirectResult, LazyResult, AsyncResult {
 
     /**
      * Check the current result has failures.
