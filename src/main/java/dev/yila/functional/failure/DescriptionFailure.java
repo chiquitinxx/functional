@@ -32,11 +32,6 @@ public class DescriptionFailure implements Failure {
 
     private final String description;
 
-    /**
-     * Constructs a new DescriptionFailure.
-     * 
-     * @param description the error description
-     */
     DescriptionFailure(String description) {
         Objects.requireNonNull(description);
         this.description = description;

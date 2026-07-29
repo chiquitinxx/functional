@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -34,6 +33,8 @@ public class Matcher<I, O> {
 
     /**
      * Creates a new empty matcher for the specified input and output types.
+     * Use {@link #on(Function, Function)} to add match cases and
+     * {@link #orElse(Function)} to add a default case.
      * 
      * @param input the input type class
      * @param outputClass the output type class
@@ -84,7 +85,7 @@ public class Matcher<I, O> {
     private Function<I, DirectResult<O>> defaultCase = (input) -> DirectResult.failure(new MatcherNotFoundFailure(input));
 
     private Matcher(Class<I> inputClass, Class<O> outputClass) {
-        this.matchers = Collections.EMPTY_LIST;
+        this.matchers = Collections.emptyList();
     }
 
     private Matcher(List<Pair<Function<I, Boolean>, Function<I, O>>> matchers, Function<I, O> function) {
@@ -99,12 +100,13 @@ public class Matcher<I, O> {
     private Matcher(List<Pair<Function<I, Boolean>, Function<I, O>>> matchers,
                     Pair<Function<I, Boolean>, Function<I, O>> pair,
                     Function<I, DirectResult<O>> defaultCase) {
-        this.matchers = Stream.concat(matchers.stream(), Stream.of(pair)).collect(Collectors.toList());
+        this.matchers = Stream.concat(matchers.stream(), Stream.of(pair)).toList();
         this.defaultCase = defaultCase;
     }
 
     /**
      * Adds a new match case to this matcher.
+     * Cases are evaluated in order, and the first matching case wins.
      * 
      * @param matchFunction the function that determines if this case matches
      * @param outputFunction the function that produces the output for matching inputs
@@ -116,7 +118,7 @@ public class Matcher<I, O> {
 
     /**
      * Adds a default case that matches any input not matched by previous cases.
-     * This case will always be evaluated last.
+     * This case will always be evaluated last, after all other cases have been tried.
      * 
      * @param function the function that produces the output for unmatched inputs
      * @return a new matcher with the default case
@@ -127,13 +129,15 @@ public class Matcher<I, O> {
 
     /**
      * Evaluates the given input against all match cases and returns the result.
+     * Returns the output from the first matching case, or the result of the
+     * default case if no cases matched.
      * 
      * @param input the input value to match
-     * @return a DirectResult containing either the output from the first matching case
-     *         or a failure if no cases matched
+     * @return a Result containing either the output from the first matching case
+     *         or a failure if no cases matched and no default case was provided
      * @throws IllegalArgumentException if input is null
      */
-    public DirectResult<O> resultFor(I input) {
+    public Result<O> resultFor(I input) {
         if (input == null) {
             throw new IllegalArgumentException("null is not allowed for as input");
         }

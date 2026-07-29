@@ -18,7 +18,6 @@ import dev.yila.functional.failure.Failure;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Utility class for validating values using multiple validation functions.
@@ -49,7 +48,7 @@ public class Validation {
         }
         List<Result<T>> results = Arrays.stream(validations)
                 .map(pair -> validate(value, pair.left(), pair.right()))
-                .collect(Collectors.toList());
+                .toList();
         return DirectResult.sequence(list -> list.getFirst(), results.toArray(new Result[0]));
     }
 

@@ -66,6 +66,7 @@ public class Agent<T> {
      *
      * @param executor
      * @param initialValue
+     * @param maxCapacity
      * @param errorHandler
      * @return
      * @param <T>

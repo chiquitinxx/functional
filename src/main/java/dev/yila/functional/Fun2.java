@@ -26,6 +26,11 @@ public class Fun2<I1, I2, O> {
 
     private final BiFunction<I1, I2, O> function;
 
+    /**
+     * Constructs a new Fun2 with the specified bi-function.
+     * 
+     * @param function the bi-function to wrap
+     */
     public Fun2(BiFunction<I1, I2, O> function) {
         Objects.requireNonNull(function);
         this.function = function;
@@ -35,10 +40,24 @@ public class Fun2<I1, I2, O> {
         return new Fun2<>(function);
     }
 
+    /**
+     * Applies this function to the given inputs and returns a Result.
+     * 
+     * @param i1 the first input to the function
+     * @param i2 the second input to the function
+     * @return a Result containing the output
+     */
     public Result<O> apply(I1 i1, I2 i2) {
         return DirectResult.ok(function.apply(i1, i2));
     }
 
+    /**
+     * Returns a new Fun that applies the first argument and expects the second.
+     * This implements currying for functions with two arguments.
+     * 
+     * @param i1 the first argument to bind
+     * @return a new Fun that takes the second argument
+     */
     public Fun<I2, O> curry(I1 i1) {
         return Fun.from(i2 -> function.apply(i1, i2));
     }

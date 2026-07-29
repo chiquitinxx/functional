@@ -123,6 +123,14 @@ public final class AsyncResult <T> implements Result<T> {
         }, executor), exceptionClass);
     }
 
+    /**
+     * Returns a new Result that will fail if this AsyncResult does not complete
+     * within the specified timeout.
+     * 
+     * @param timeout the maximum time to wait
+     * @param unit the time unit of the timeout argument
+     * @return a new Result that will complete within the timeout or fail
+     */
     public Result<T> withTimeout(long timeout, TimeUnit unit) {
         CompletableFuture<Result<T>> timedCf = this.completableFuture.orTimeout(timeout, unit)
                 .exceptionally(this::throwableError);

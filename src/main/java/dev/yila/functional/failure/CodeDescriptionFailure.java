@@ -32,12 +32,6 @@ public class CodeDescriptionFailure implements Failure {
     private final String code;
     private final String description;
 
-    /**
-     * Constructs a new CodeDescriptionFailure.
-     * 
-     * @param code the error code
-     * @param description the error description
-     */
     CodeDescriptionFailure(String code, String description) {
         this.code = code;
         this.description = description;

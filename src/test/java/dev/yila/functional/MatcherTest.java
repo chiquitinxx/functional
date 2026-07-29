@@ -37,7 +37,7 @@ public class MatcherTest {
                 .on(number -> number == 1, number -> "one")
                 .on(number -> number < 3, number -> "lessThan3")
                 .orElse(number -> "other");
-        DirectResult<String> result = matcher.resultFor(input);
+        var result = matcher.resultFor(input);
         assertEquals(result.getOrThrow(), expectedResult);
     }
 

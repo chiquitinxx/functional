@@ -54,6 +54,14 @@ public class Fun<I, O> {
         return new Fun<>(first.function.andThen(second.function));
     }
 
+    /**
+     * Applies this function to the given input and returns a Result.
+     * If this Fun was created with an exception function and the specified
+     * exception occurs, it will be caught and returned as a failure.
+     * 
+     * @param i the input to the function
+     * @return a Result containing the output or a failure
+     */
     public Result<O> apply(I i) {
         if (allowedException != null) {
             try {

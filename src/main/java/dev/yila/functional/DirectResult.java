@@ -19,7 +19,6 @@ import dev.yila.functional.failure.MultipleFailures;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Class to store the direct result value or the failure.
@@ -225,22 +224,26 @@ public final class DirectResult<T> implements Result<T> {
     }
 
     /**
-     * Sequence multiple Results in one DirectResult.
-     * @param successSequence function to combine the list of results
-     * @param results list of results
-     * @return DirectResult
-     * @param <T> Type of the value
+     * Combines multiple Results into a single DirectResult.
+     * If all results are successful, the successSequence function is applied
+     * to the list of successful values. If any result has a failure,
+     * all failures are collected into a MultipleFailures.
+     * 
+     * @param successSequence the function to combine successful values
+     * @param results the results to combine
+     * @return a DirectResult containing the combined result or all failures
+     * @param <T> the type of the values in the results
      */
     @SafeVarargs
     public static <T> DirectResult<T> sequence(Function<List<T>, T> successSequence, Result<T>... results) {
         List<Failure> failures = Arrays.stream(results)
                 .filter(Result::hasFailure)
                 .map(result -> result.failure().get())
-                .collect(Collectors.toList());
+                .toList();
         if (failures.isEmpty()) {
             T res = successSequence.apply(Arrays.stream(results)
                     .map(Result::getOrThrow)
-                    .collect(Collectors.toList()));
+                    .toList());
             return DirectResult.ok(res);
         } else {
             return DirectResult.failures(failures);
@@ -248,10 +251,15 @@ public final class DirectResult<T> implements Result<T> {
     }
 
     /**
-     * Unwrap optional
-     * @param result
-     * @return
-     * @param <U>
+     * Unwraps a Result containing an Optional into a DirectResult.
+     * If the Result is a success containing an Optional, returns a DirectResult
+     * with the value from the Optional. If the Result is a failure, returns
+     * a DirectResult with that failure. If the Optional is empty, returns
+     * a DirectResult with a NoSuchElementException failure.
+     * 
+     * @param result the Result containing an Optional to unwrap
+     * @return a DirectResult containing the unwrapped value or the failure
+     * @param <U> the type of the unwrapped value
      */
     public static <U> DirectResult<U> join(Result<Optional<U>> result) {
         if (result.hasFailure()) {

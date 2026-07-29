@@ -49,9 +49,10 @@ public record Pair<L, R>(L left, R right) {
 
     /**
      * Applies a bi-function to the left and right values.
+     * 
      * @param biFunction the function to apply
      * @param <T> the result type
-     * @return the result of applying the function
+     * @return the result of applying the function to the left and right values
      */
     public <T> T apply(BiFunction<L, R, T> biFunction) {
         return biFunction.apply(this.left, this.right);
