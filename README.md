@@ -5,6 +5,23 @@
 
 A Java 21 library designed to enhance your functional programming experience by providing a collection of robust and thread-safe classes for handling common functional patterns.
 
+## Architecture & Design Philosophy
+
+This library is built around **polymorphic execution** — a core design principle that allows you to write business logic once and execute it in different ways without changing your code.
+
+The `Result<T>` sealed interface serves as the foundation, with three implementations:
+- **`DirectResult<T>`**: Synchronous, immediate execution (for simple, fast operations)
+- **`AsyncResult<T>`**: Asynchronous execution using `CompletableFuture` (for I/O-bound or long-running tasks)
+- **`LazyResult<T>`**: Deferred execution (for expensive computations that should only run when needed)
+
+All three implement the same `Result<T>` interface, so your functional pipelines (`map`, `flatMap`, etc.) remain identical regardless of the execution model. This means you can:
+- Start with synchronous code for simplicity
+- Switch to async when you need non-blocking behavior
+- Use lazy evaluation for performance optimization
+- **Without changing a single line of your business logic**
+
+This approach provides flexibility without complexity, making it ideal for applications that need to handle a mix of synchronous and asynchronous operations.
+
 ## Core Classes
 
 ### `Pair<L, R>` 
@@ -103,12 +120,12 @@ System.out.println(counter.get());       // 1
 
 ```java
 // Fun example: squaring a number
-Fun<Integer, Integer> square = i -> i * i;
+Fun<Integer, Integer> square = Fun.from(i -> i * i);
 Result<Integer> result = square.apply(2);
 System.out.println(result.getOrThrow()); // 4
 
 // Fun2 example: adding two numbers
-Fun2<Integer, Integer, Integer> add = (a, b) -> a + b;
+Fun2<Integer, Integer, Integer> add = Fun2.from((a, b) -> a + b);
 Result<Integer> sumResult = add.apply(3, 5);
 System.out.println(sumResult.getOrThrow()); // 8
 
@@ -126,19 +143,19 @@ System.out.println(plus10.apply(2).getOrThrow()); //12
 
 ### `Matcher<I, O>`
 
-A simple yet powerful pattern matcher that evaluates an input value against a series of conditions (`when`) and returns an output value.
+A simple yet powerful pattern matcher that evaluates an input value against a series of conditions and returns a `Result` with the output value. Use `create()` to start building a matcher, `on()` to add match cases, and `resultFor()` to evaluate an input.
 
 **Usage:**
 
 ```java
-Matcher<Integer, String> numberMatcher = Matcher
-    .when(i -> i == 1, i -> "One")
-    .when(i -> i == 2, i -> "Two")
-    .when(i -> i > 2, i -> "More than two");
+Matcher<Integer, String> numberMatcher = Matcher.create(Integer.class, String.class)
+    .on(i -> i == 1, i -> "One")
+    .on(i -> i == 2, i -> "Two")
+    .on(i -> i > 2, i -> "More than two");
 
-Optional<String> result1 = numberMatcher.eval(1); // Optional.of("One")
-Optional<String> result2 = numberMatcher.eval(5); // Optional.of("More than two")
-Optional<String> result3 = numberMatcher.eval(0); // Optional.empty()
+Result<String> result1 = numberMatcher.resultFor(1); // Result.ok("One")
+Result<String> result2 = numberMatcher.resultFor(5); // Result.ok("More than two")
+Result<String> result3 = numberMatcher.resultFor(0); // Result with MatcherNotFoundFailure
 ```
 
 ### `Validation`

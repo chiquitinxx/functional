@@ -20,6 +20,23 @@ import java.util.stream.Collectors;
 
 /**
  * A failure that contains multiple individual failures.
+ * <p>
+ * This failure type is used when an operation fails for multiple reasons, such as
+ * validating a value against multiple rules where several validations fail simultaneously.
+ * <p>
+ * When converted to an exception using {@link #toException()}, the first failure becomes
+ * the primary exception and the remaining failures are added as suppressed exceptions.
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * List<Failure> failures = List.of(
+ *     DescriptionFailure.create("Name is required"),
+ *     DescriptionFailure.create("Email is invalid")
+ * );
+ * Result<String> result = DirectResult.failure(new MultipleFailures(failures));
+ * }</pre>
+ *
+ * @see Failure
  */
 public class MultipleFailures implements Failure {
 
@@ -27,8 +44,9 @@ public class MultipleFailures implements Failure {
 
     /**
      * Creates a new MultipleFailures from a list of failures.
-     * 
-     * @param failures the list of failures
+     *
+     * @param failures the list of individual failures
+     * @throws NullPointerException if failures is null
      */
     public MultipleFailures(List<Failure> failures) {
         this.failures = failures;
@@ -36,8 +54,9 @@ public class MultipleFailures implements Failure {
 
     /**
      * Creates a new MultipleFailures from multiple failure objects.
-     * 
-     * @param failures the failure objects
+     *
+     * @param failures the individual failure objects
+     * @throws NullPointerException if failures is null
      */
     public MultipleFailures(Failure... failures) {
         this.failures = Arrays.asList(failures);
@@ -50,8 +69,10 @@ public class MultipleFailures implements Failure {
 
     /**
      * Returns the list of individual failures.
-     * 
-     * @return the list of failures
+     * <p>
+     * The returned list is immutable.
+     *
+     * @return the unmodifiable list of failures
      */
     public List<Failure> getFailures() {
         return failures;

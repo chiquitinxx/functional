@@ -14,16 +14,32 @@
 package dev.yila.functional.failure;
 
 /**
- * A failure that wraps a Exception.
+ * A failure that wraps an Exception.
+ * <p>
+ * This failure type is used when a functional operation fails due to an exception.
+ * The wrapped exception can be retrieved using {@link #getException()} or converted
+ * back using {@link Failure#toException()}.
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * try {
+ *     // some operation that might throw
+ * } catch (IOException e) {
+ *     Result<String> result = DirectResult.failure(ExceptionFailure(e));
+ * }
+ * }</pre>
+ *
+ * @see Failure#create(Exception)
  */
 public class ExceptionFailure implements Failure {
 
     private final Exception exception;
 
     /**
-     * Creates a new ExceptionFailure.
-     * 
+     * Creates a new ExceptionFailure wrapping the specified exception.
+     *
      * @param exception the exception to wrap
+     * @throws NullPointerException if exception is null
      */
     public ExceptionFailure(Exception exception) {
         this.exception = exception;
@@ -31,7 +47,7 @@ public class ExceptionFailure implements Failure {
 
     /**
      * Returns the wrapped exception.
-     * 
+     *
      * @return the wrapped exception
      */
     public Exception getException() {

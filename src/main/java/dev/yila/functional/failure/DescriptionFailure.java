@@ -17,14 +17,25 @@ import java.util.Objects;
 
 /**
  * A failure that contains a descriptive error message.
+ * <p>
+ * This is the simplest failure type, suitable for cases where only a
+ * human-readable error message is needed.
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * Result<String> result = DirectResult.failure(DescriptionFailure.create("Invalid input"));
+ * }</pre>
+ *
+ * @see Failure#create(String)
  */
 public class DescriptionFailure implements Failure {
 
     /**
-     * Creates a new DescriptionFailure.
-     * 
-     * @param description the error description
+     * Creates a new DescriptionFailure with the specified error message.
+     *
+     * @param description the error description message
      * @return a new DescriptionFailure
+     * @throws NullPointerException if description is null
      */
     public static DescriptionFailure create(String description) {
         return new DescriptionFailure(description);
@@ -32,6 +43,12 @@ public class DescriptionFailure implements Failure {
 
     private final String description;
 
+    /**
+     * Constructs a new DescriptionFailure.
+     *
+     * @param description the error description message
+     * @throws NullPointerException if description is null
+     */
     DescriptionFailure(String description) {
         Objects.requireNonNull(description);
         this.description = description;
