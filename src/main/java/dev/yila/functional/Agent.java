@@ -13,10 +13,13 @@
  */
 package dev.yila.functional;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 /**
@@ -27,6 +30,11 @@ public class Agent<T> {
 
     static final Integer DEFAULT_MAX_CAPACITY = 10_000;
 
+    static final Consumer<Exception> DEFAULT_ERROR_HANDLER = e -> {
+        System.err.println("Agent update failed: " + e.getMessage());
+        e.printStackTrace();
+    };
+
     /**
      *
      * @param executor
@@ -35,7 +43,9 @@ public class Agent<T> {
      * @param <T>
      */
     public static <T> Agent<T> create(Executor executor, T initialValue) {
-        return new Agent<>(executor, initialValue, DEFAULT_MAX_CAPACITY);
+        Objects.requireNonNull(executor);
+        Objects.requireNonNull(initialValue);
+        return new Agent<>(executor, initialValue, DEFAULT_MAX_CAPACITY, DEFAULT_ERROR_HANDLER);
     }
 
     /**
@@ -47,7 +57,25 @@ public class Agent<T> {
      * @param <T>
      */
     public static <T> Agent<T> create(Executor executor, T initialValue, int maxCapacity) {
-        return new Agent<>(executor, initialValue, maxCapacity);
+        Objects.requireNonNull(executor);
+        Objects.requireNonNull(initialValue);
+        return new Agent<>(executor, initialValue, maxCapacity, DEFAULT_ERROR_HANDLER);
+    }
+
+    /**
+     *
+     * @param executor
+     * @param initialValue
+     * @param errorHandler
+     * @return
+     * @param <T>
+     */
+    public static <T> Agent<T> create(Executor executor, T initialValue, int maxCapacity,
+                                      Consumer<Exception> errorHandler) {
+        Objects.requireNonNull(executor);
+        Objects.requireNonNull(initialValue);
+        Objects.requireNonNull(errorHandler);
+        return new Agent<>(executor, initialValue, maxCapacity, errorHandler);
     }
 
     /**
@@ -71,16 +99,17 @@ public class Agent<T> {
     }
 
     private final Executor executor;
-    private final int maxCapacity;
+    private final Semaphore capacitySemaphore;
+    private final Consumer<Exception> errorHandler;
     private volatile T value;
     private final ConcurrentLinkedQueue<UnaryOperator<T>> mailbox = new ConcurrentLinkedQueue<>();
     private final AtomicInteger wip = new AtomicInteger(0);
-    private final AtomicInteger size = new AtomicInteger(0);
 
-    private Agent(Executor executor, T initialValue, int maxCapacity) {
+    private Agent(Executor executor, T initialValue, int maxCapacity, Consumer<Exception> errorHandler) {
         this.executor = executor;
         this.value = initialValue;
-        this.maxCapacity = maxCapacity;
+        this.errorHandler = errorHandler;
+        this.capacitySemaphore = new Semaphore(maxCapacity);
     }
 
     private AsyncResult<T> getValue() {
@@ -93,8 +122,7 @@ public class Agent<T> {
     }
 
     private void addFunction(UnaryOperator<T> updateFunction) {
-        if (size.incrementAndGet() > maxCapacity) {
-            size.decrementAndGet();
+        if (!capacitySemaphore.tryAcquire()) {
             throw new IllegalStateException("Agent mailbox is full");
         }
         mailbox.offer(updateFunction);
@@ -115,9 +143,9 @@ public class Agent<T> {
                 try {
                     this.value = update.apply(this.value);
                 } catch (Exception e) {
-                    // Ignore exception
+                    errorHandler.accept(e);
                 } finally {
-                    size.decrementAndGet();
+                    capacitySemaphore.release();
                 }
             }
             missed = wip.addAndGet(-missed);

@@ -13,13 +13,17 @@
  */
 package dev.yila.functional;
 
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AgentTest {
 
@@ -84,5 +88,39 @@ public class AgentTest {
         
         await().ignoreException(IllegalStateException.class)
                 .until(() -> Agent.get(agent).getOrThrow() == 2);
+    }
+
+    @Test
+    public void customErrorHandler() {
+        var number = new AtomicInteger();
+        Agent<Integer> agent = Agent.create(executor, 0, 2,
+                (e -> number.set(17)));
+        Agent.update(agent, i -> {
+            throw new RuntimeException();
+        });
+        await().until(() -> number.get() == 17);
+    }
+
+    @RepeatedTest(3)
+    public void concurrentMaxCapacityCheckOverload() {
+        int numberOfThreads = 1000;
+        CountDownLatch latch = new CountDownLatch(1);
+        var number = new AtomicInteger();
+        Agent<Integer> agent = Agent.create(Executors.newVirtualThreadPerTaskExecutor(), 0, 1);
+        for (var i = 0; i < numberOfThreads; i++) {
+            Thread.startVirtualThread(() -> {
+                try {
+                    latch.await();
+                    Agent.update(agent, value -> value + 1);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalStateException ie) {
+                    number.incrementAndGet();
+                }
+            });
+        }
+        latch.countDown();
+
+        await().until(() -> number.get() + Agent.get(agent).getOrThrow() == numberOfThreads);
     }
 }
